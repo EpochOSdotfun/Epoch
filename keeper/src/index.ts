@@ -1,9 +1,23 @@
 import { Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
-import { PrismaClient, AlertType, AlertSeverity } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import * as cron from 'node-cron';
 import pino from 'pino';
 import 'dotenv/config';
 import * as fs from 'fs';
+
+// Define types locally to avoid Prisma generation dependency
+type AlertType = 
+  | 'SWAP_FAILURE'
+  | 'SLIPPAGE_EXCEEDED'
+  | 'FEE_CLAIM_MISSED'
+  | 'RPC_ERROR'
+  | 'BALANCE_DRIFT'
+  | 'SUSPICIOUS_TX'
+  | 'CIRCUIT_BREAKER'
+  | 'EPOCH_FAILED'
+  | 'LOW_TREASURY';
+
+type AlertSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
 
 import { FeeClaimService } from './services/fee-claim';
 import { SwapService } from './services/swap';

@@ -1,5 +1,19 @@
-import { PrismaClient, AlertType, AlertSeverity } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import pino from 'pino';
+
+// Define types locally to avoid Prisma generation dependency
+type AlertType = 
+  | 'SWAP_FAILURE'
+  | 'SLIPPAGE_EXCEEDED'
+  | 'FEE_CLAIM_MISSED'
+  | 'RPC_ERROR'
+  | 'BALANCE_DRIFT'
+  | 'SUSPICIOUS_TX'
+  | 'CIRCUIT_BREAKER'
+  | 'EPOCH_FAILED'
+  | 'LOW_TREASURY';
+
+type AlertSeverity = 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
 
 const logger = pino({ name: 'circuit-breaker' });
 

@@ -1,6 +1,22 @@
 import { Connection, PublicKey, ParsedTransactionWithMeta } from '@solana/web3.js';
-import { PrismaClient, TxType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import pino from 'pino';
+
+// Define TxType locally to avoid Prisma generation dependency
+type TxType = 
+  | 'FEE_CLAIM'
+  | 'SWAP'
+  | 'BURN'
+  | 'LP_ADD'
+  | 'LP_REMOVE'
+  | 'EPOCH_PUBLISH'
+  | 'CLAIM'
+  | 'ROUTE_REWARDS'
+  | 'ROUTE_BUYBACK'
+  | 'ROUTE_BURN'
+  | 'ROUTE_AUTO_LP'
+  | 'CONFIG_UPDATE'
+  | 'ADMIN_ACTION';
 
 const logger = pino({ name: 'indexer' });
 
