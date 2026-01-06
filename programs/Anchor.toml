@@ -1,0 +1,26 @@
+[features]
+seeds = false
+skip-lint = false
+
+[programs.localnet]
+distributor = "DistrXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+controller = "CtrlrXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+[programs.devnet]
+distributor = "DistrXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+controller = "CtrlrXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+[programs.mainnet]
+distributor = "DistrXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+controller = "CtrlrXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+

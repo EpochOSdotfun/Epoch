@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Epoch state - mirrors on-chain epoch data
+model Epoch {
+  id              Int       @id @default(autoincrement())
+  epochId         BigInt    @unique @map("epoch_id")
+  startSlot       BigInt    @map("start_slot")
+  endSlot         BigInt    @map("end_slot")
+  merkleRoot      String    @map("merkle_root") @db.VarChar(66)
+  rewardsSol      BigInt    @map("rewards_sol")
+  rewardsToken    BigInt    @map("rewards_token")
+  claimedSol      BigInt    @default(0) @map("claimed_sol")
+  claimedToken    BigInt    @default(0) @map("claimed_token")
+  numClaimants    Int       @default(0) @map("num_claimants")
+  publishSig      String?   @map("publish_sig") @db.VarChar(88)
+  csvHash         String?   @map("csv_hash") @db.VarChar(66)
+  publishedAt     DateTime  @map("published_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  allocations     Allocation[]
+  claims          Claim[]
+  walletBalances  WalletBalance[]
+
+  @@map("epochs")
+}
+
+// Wallet balance snapshot at epoch boundary
+model WalletBalance {
+  id              Int       @id @default(autoincrement())
+  epochId         BigInt    @map("epoch_id")
+  wallet          String    @db.VarChar(44)
+  balance         BigInt
+  eligible        Boolean   @default(true)
+  sourceHash      String?   @map("source_hash") @db.VarChar(66)
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  epoch           Epoch     @relation(fields: [epochId], references: [epochId])
+
+  @@unique([epochId, wallet])
+  @@index([wallet])
+  @@index([epochId])
+  @@map("wallet_balances")
+}
+
+// Allocation per wallet per epoch
+model Allocation {
+  id              Int       @id @default(autoincrement())
+  epochId         BigInt    @map("epoch_id")
+  wallet          String    @db.VarChar(44)
+  amountSol       BigInt    @map("amount_sol")
+  amountToken     BigInt    @map("amount_token")
+  leafHash        String    @map("leaf_hash") @db.VarChar(66)
+  proof           String[]  // Merkle proof as array of hashes
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  epoch           Epoch     @relation(fields: [epochId], references: [epochId])
+
+  @@unique([epochId, wallet])
+  @@index([wallet])
+  @@index([epochId])
+  @@map("allocations")
+}
+
+// Claim records
+model Claim {
+  id              Int       @id @default(autoincrement())
+  epochId         BigInt    @map("epoch_id")
+  wallet          String    @db.VarChar(44)
+  claimedSol      BigInt    @map("claimed_sol")
+  claimedToken    BigInt    @map("claimed_token")
+  claimSig        String    @map("claim_sig") @db.VarChar(88)
+  claimedAt       DateTime  @map("claimed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  epoch           Epoch     @relation(fields: [epochId], references: [epochId])
+
+  @@unique([epochId, wallet])
+  @@index([wallet])
+  @@index([epochId])
+  @@index([claimSig])
+  @@map("claims")
+}
+
+// All flywheel transactions for audit
+model Transaction {
+  id              Int       @id @default(autoincrement())
+  signature       String    @unique @db.VarChar(88)
+  type            TxType
+  slot            BigInt
+  blockTime       DateTime? @map("block_time")
+  success         Boolean   @default(true)
+  meta            Json?     // Additional tx-specific data
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([type])
+  @@index([slot])
+  @@map("transactions")
+}
+
+enum TxType {
+  FEE_CLAIM
+  SWAP
+  BURN
+  LP_ADD
+  LP_REMOVE
+  EPOCH_PUBLISH
+  CLAIM
+  ROUTE_REWARDS
+  ROUTE_BUYBACK
+  ROUTE_BURN
+  ROUTE_AUTO_LP
+  CONFIG_UPDATE
+  ADMIN_ACTION
+}
+
+// Configuration change history
+model ConfigHistory {
+  id              Int       @id @default(autoincrement())
+  field           String
+  oldValue        String?   @map("old_value")
+  newValue        String    @map("new_value")
+  signature       String?   @db.VarChar(88)
+  changedBy       String    @map("changed_by") @db.VarChar(44)
+  changedAt       DateTime  @map("changed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([field])
+  @@map("config_history")
+}
+
+// Metrics snapshots for dashboard
+model MetricSnapshot {
+  id              Int       @id @default(autoincrement())
+  timestamp       DateTime  @default(now())
+  price           Decimal?  @db.Decimal(18, 8)
+  liquidity       BigInt?
+  volume24h       BigInt?   @map("volume_24h")
+  totalDistributed BigInt?  @map("total_distributed")
+  totalBurned     BigInt?   @map("total_burned")
+  holderCount     Int?      @map("holder_count")
+  currentEpoch    Int?      @map("current_epoch")
+  treasuryBalance BigInt?   @map("treasury_balance")
+  meta            Json?
+
+  @@index([timestamp])
+  @@map("metric_snapshots")
+}
+
+// Wallet aggregate stats (denormalized for fast queries)
+model WalletStats {
+  id              Int       @id @default(autoincrement())
+  wallet          String    @unique @db.VarChar(44)
+  totalEarnedSol  BigInt    @default(0) @map("total_earned_sol")
+  totalEarnedToken BigInt   @default(0) @map("total_earned_token")
+  totalClaimedSol BigInt    @default(0) @map("total_claimed_sol")
+  totalClaimedToken BigInt  @default(0) @map("total_claimed_token")
+  lastClaimEpoch  BigInt?   @map("last_claim_epoch")
+  firstEligibleEpoch BigInt? @map("first_eligible_epoch")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("wallet_stats")
+}
+
+// Blacklist for ineligible wallets
+model Blacklist {
+  id              Int       @id @default(autoincrement())
+  wallet          String    @unique @db.VarChar(44)
+  reason          String?
+  addedBy         String    @map("added_by") @db.VarChar(44)
+  addedAt         DateTime  @default(now()) @map("added_at")
+
+  @@map("blacklist")
+}
+
+// Known addresses (burn address, LP vaults, treasury, etc.)
+model KnownAddress {
+  id              Int       @id @default(autoincrement())
+  address         String    @unique @db.VarChar(44)
+  label           String
+  type            AddressType
+  excludeFromRewards Boolean @default(false) @map("exclude_from_rewards")
+  meta            Json?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("known_addresses")
+}
+
+enum AddressType {
+  BURN
+  LP_VAULT
+  TREASURY
+  PROGRAM
+  EXCHANGE
+  TEAM
+  OTHER
+}
+
+// Alert/monitoring events
+model Alert {
+  id              Int       @id @default(autoincrement())
+  type            AlertType
+  severity        AlertSeverity
+  message         String
+  meta            Json?
+  acknowledged    Boolean   @default(false)
+  acknowledgedBy  String?   @map("acknowledged_by") @db.VarChar(44)
+  acknowledgedAt  DateTime? @map("acknowledged_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@index([type])
+  @@index([severity])
+  @@index([acknowledged])
+  @@map("alerts")
+}
+
+enum AlertType {
+  SWAP_FAILURE
+  SLIPPAGE_EXCEEDED
+  FEE_CLAIM_MISSED
+  RPC_ERROR
+  BALANCE_DRIFT
+  SUSPICIOUS_TX
+  CIRCUIT_BREAKER
+  EPOCH_FAILED
+  LOW_TREASURY
+}
+
+enum AlertSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+

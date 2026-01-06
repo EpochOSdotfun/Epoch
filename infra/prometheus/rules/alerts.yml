@@ -1,0 +1,144 @@
+groups:
+  - name: flywheel_alerts
+    rules:
+      # Keeper alerts
+      - alert: KeeperDown
+        expr: up{job="keeper"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Keeper bot is down"
+          description: "Keeper bot has been down for more than 5 minutes"
+
+      - alert: KeeperCycleFailure
+        expr: increase(keeper_cycle_failures_total[1h]) > 3
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Multiple keeper cycle failures"
+          description: "Keeper has failed {{ $value }} times in the last hour"
+
+      - alert: CircuitBreakerOpen
+        expr: keeper_circuit_breaker_state == 1
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Keeper circuit breaker is open"
+          description: "Circuit breaker has been triggered, automation is stopped"
+
+      # Treasury alerts
+      - alert: LowTreasuryBalance
+        expr: treasury_balance_lamports < 100000000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low treasury balance"
+          description: "Treasury balance is below 0.1 SOL"
+
+      - alert: TreasuryBalanceDrift
+        expr: abs(treasury_balance_expected - treasury_balance_actual) > 10000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Treasury balance drift detected"
+          description: "Expected vs actual treasury balance drift: {{ $value }} lamports"
+
+      # Swap alerts
+      - alert: HighSlippage
+        expr: swap_slippage_bps > 200
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High slippage on swap"
+          description: "Swap slippage was {{ $value }} bps"
+
+      - alert: SwapFailures
+        expr: increase(swap_failures_total[1h]) > 5
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Multiple swap failures"
+          description: "{{ $value }} swap failures in the last hour"
+
+      # Epoch alerts
+      - alert: EpochPublishDelay
+        expr: (time() - last_epoch_publish_timestamp) > 90000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Epoch publish delayed"
+          description: "No epoch published in over 25 hours"
+
+      - alert: LowClaimRate
+        expr: (epoch_claimed_total / epoch_allocated_total) < 0.1
+        for: 24h
+        labels:
+          severity: info
+        annotations:
+          summary: "Low claim rate"
+          description: "Less than 10% of allocated rewards have been claimed"
+
+      # Infrastructure alerts
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend API is down"
+          description: "Backend API has been down for more than 2 minutes"
+
+      - alert: HighApiLatency
+        expr: http_request_duration_seconds{quantile="0.95"} > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency"
+          description: "95th percentile latency is {{ $value }}s"
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "{{ $value }} active database connections"
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage high"
+          description: "Redis memory usage is at {{ $value | humanizePercentage }}"
+
+      # RPC alerts
+      - alert: RPCErrors
+        expr: increase(rpc_errors_total[15m]) > 10
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RPC error rate"
+          description: "{{ $value }} RPC errors in the last 15 minutes"
+
+      - alert: RPCLatencyHigh
+        expr: rpc_request_duration_seconds{quantile="0.95"} > 5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RPC latency"
+          description: "95th percentile RPC latency is {{ $value }}s"
+

@@ -1,0 +1,35 @@
+{
+  "name": "@flywheel/keeper",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Keeper bot for SOL Flywheel automation",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.87.6",
+    "@solana/spl-token": "^0.3.9",
+    "@project-serum/anchor": "^0.29.0",
+    "@prisma/client": "^5.7.0",
+    "ioredis": "^5.3.2",
+    "node-cron": "^3.0.3",
+    "dotenv": "^16.3.1",
+    "pino": "^8.16.2",
+    "pino-pretty": "^10.2.3",
+    "bs58": "^5.0.0",
+    "axios": "^1.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.2",
+    "vitest": "^1.0.4"
+  }
+}
+
