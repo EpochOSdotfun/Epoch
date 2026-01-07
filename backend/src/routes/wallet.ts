@@ -85,7 +85,8 @@ export async function walletRoutes(app: FastifyInstance) {
       },
     });
 
-    const claimsMap = new Map(claims.map(c => [Number(c.epochId), c]));
+    type ClaimData = typeof claims[number];
+    const claimsMap = new Map<number, ClaimData>(claims.map(c => [Number(c.epochId), c]));
 
     // Calculate totals
     let totalEarnedSol = 0n;

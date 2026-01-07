@@ -169,14 +169,14 @@ export class Indexer {
   private parseInstructionType(logs: string[]): TxType | null {
     const logStr = logs.join(' ');
 
-    if (logStr.includes('Epoch') && logStr.includes('published')) return TxType.EPOCH_PUBLISH;
-    if (logStr.includes('Claimed')) return TxType.CLAIM;
-    if (logStr.includes('Routed') && logStr.includes('rewards')) return TxType.ROUTE_REWARDS;
-    if (logStr.includes('Routed') && logStr.includes('buyback')) return TxType.ROUTE_BUYBACK;
-    if (logStr.includes('Routed') && logStr.includes('burn')) return TxType.ROUTE_BURN;
-    if (logStr.includes('Routed') && logStr.includes('auto-LP')) return TxType.ROUTE_AUTO_LP;
-    if (logStr.includes('Swap')) return TxType.SWAP;
-    if (logStr.includes('Funded')) return TxType.FEE_CLAIM;
+    if (logStr.includes('Epoch') && logStr.includes('published')) return 'EPOCH_PUBLISH';
+    if (logStr.includes('Claimed')) return 'CLAIM';
+    if (logStr.includes('Routed') && logStr.includes('rewards')) return 'ROUTE_REWARDS';
+    if (logStr.includes('Routed') && logStr.includes('buyback')) return 'ROUTE_BUYBACK';
+    if (logStr.includes('Routed') && logStr.includes('burn')) return 'ROUTE_BURN';
+    if (logStr.includes('Routed') && logStr.includes('auto-LP')) return 'ROUTE_AUTO_LP';
+    if (logStr.includes('Swap')) return 'SWAP';
+    if (logStr.includes('Funded')) return 'FEE_CLAIM';
 
     return null;
   }
