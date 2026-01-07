@@ -50,18 +50,25 @@ const securityItems = [
   },
 ];
 
-const auditItems = [
+type AuditStatus = 'verified' | 'pending';
+
+const auditItems: Array<{
+  title: string;
+  auditor: string;
+  date: string;
+  status: AuditStatus;
+}> = [
   {
     title: 'Smart Contract Audit',
     auditor: 'Pending',
     date: 'Q1 2024',
-    status: 'pending' as const,
+    status: 'pending',
   },
   {
     title: 'Economic Audit',
     auditor: 'Pending',
     date: 'Q1 2024',
-    status: 'pending' as const,
+    status: 'pending',
   },
 ];
 
