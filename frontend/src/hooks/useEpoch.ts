@@ -15,7 +15,7 @@ interface Epoch {
   publishedAt: string;
   publishSig: string | null;
   csvHash: string | null;
-  claimProgress: number;
+  claimProgress: string;
 }
 
 async function fetchEpoch(epochId: number): Promise<Epoch> {

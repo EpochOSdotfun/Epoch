@@ -2,116 +2,108 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import { useState } from 'react';
 import { WalletButton } from './wallet-button';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/docs', label: 'Docs' },
-  { href: '/epochs', label: 'Metrics' },
+  { href: '/', label: 'Home' },
   { href: '/earnings', label: 'Earnings' },
-  { href: '/security', label: 'Security' },
+  { href: '/epochs', label: 'Epochs' },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 16);
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 transition-all duration-200',
-        scrolled 
-          ? 'bg-bg-primary/95 backdrop-blur-sm border-b border-surface-100' 
-          : 'bg-transparent border-b border-transparent'
-      )}
-    >
-      <nav className="container-default h-14 flex items-center justify-between">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-7 h-7 bg-ink-900 rounded flex items-center justify-center">
-            <span className="text-bg-primary font-semibold text-body-sm">E</span>
-          </div>
-          <span className="font-semibold text-body text-ink-900 group-hover:text-accent transition-colors duration-180">
-            Epoch
-          </span>
-        </Link>
+    <nav className="sticky top-0 z-50 border-b border-border-default bg-bg-primary/80 backdrop-blur-lg">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-primary to-accent-secondary" />
+            <span className="font-display font-bold text-lg hidden sm:block">SOL Flywheel</span>
+          </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-            return (
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'px-3 py-1.5 rounded text-body-sm transition-colors duration-180',
-                  isActive
-                    ? 'text-ink-900 bg-surface-50'
-                    : 'text-ink-500 hover:text-ink-900 hover:bg-surface-50/50'
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors relative',
+                  pathname === item.href
+                    ? 'text-text-primary'
+                    : 'text-text-secondary hover:text-text-primary'
                 )}
               >
                 {item.label}
+                {pathname === item.href && (
+                  <motion.div
+                    layoutId="navbar-indicator"
+                    className="absolute inset-0 bg-bg-elevated rounded-lg -z-10"
+                    transition={{ type: 'spring', duration: 0.3 }}
+                  />
+                )}
               </Link>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Wallet Button */}
+          <div className="hidden md:block">
+            <WalletButton />
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded-lg hover:bg-bg-elevated"
+          >
+            {mobileOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
-        {/* Desktop Wallet */}
-        <div className="hidden md:flex items-center gap-4">
-          <WalletButton />
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="md:hidden p-2 -mr-2 text-ink-500 hover:text-ink-900"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </nav>
-
-      {/* Mobile Navigation */}
-      {mobileOpen && (
-        <div className="md:hidden border-t border-surface-100 bg-bg-primary">
-          <div className="container-default py-4 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
+        {/* Mobile Nav */}
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden py-4 border-t border-border-default"
+          >
+            <div className="flex flex-col gap-2">
+              {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className={cn(
-                    'block px-3 py-2 rounded text-body-sm transition-colors duration-180',
-                    isActive
-                      ? 'text-ink-900 bg-surface-50'
-                      : 'text-ink-500 hover:text-ink-900 hover:bg-surface-50'
+                    'px-4 py-3 rounded-lg font-medium transition-colors',
+                    pathname === item.href
+                      ? 'bg-bg-elevated text-text-primary'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
                   )}
                 >
                   {item.label}
                 </Link>
-              );
-            })}
-            <div className="pt-4 px-3">
-              <WalletButton />
+              ))}
+              <div className="pt-4 px-4">
+                <WalletButton />
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-    </header>
+          </motion.div>
+        )}
+      </div>
+    </nav>
   );
 }
+
+

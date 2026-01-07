@@ -4,18 +4,17 @@ import { useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
 import { Transaction } from '@solana/web3.js';
-import { Loader2, CheckCircle, XCircle, ExternalLink, ArrowRight } from 'lucide-react';
-import { formatSol, cn } from '@/lib/utils';
+import { Coins, Loader2, CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { formatSol } from '@/lib/utils';
 
 interface ClaimButtonProps {
   wallet: string;
   unclaimedSol: string;
-  className?: string;
 }
 
 type ClaimState = 'idle' | 'loading' | 'success' | 'error';
 
-export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProps) {
+export function ClaimButton({ wallet, unclaimedSol }: ClaimButtonProps) {
   const { publicKey, signTransaction, connected } = useWallet();
   const { connection } = useConnection();
   const { setVisible } = useWalletModal();
@@ -29,8 +28,9 @@ export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProp
       return;
     }
 
+    // Verify wallet matches
     if (publicKey.toBase58() !== wallet) {
-      setError('Connected wallet does not match');
+      setError('Connected wallet does not match the earnings wallet');
       setState('error');
       return;
     }
@@ -39,6 +39,7 @@ export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProp
     setError(null);
 
     try {
+      // Fetch unclaimed proofs
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/v1/proof/batch/${wallet}`
       );
@@ -50,10 +51,14 @@ export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProp
         return;
       }
 
+      // For simplicity, claim first unclaimed epoch
       const proof = data.proofs[0];
+
+      // Build claim transaction
       const tx = new Transaction();
-      
-      // Build claim instruction (placeholder)
+      // Add claim instruction (placeholder for actual implementation)
+
+      // Sign and send
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
       tx.feePayer = publicKey;
 
@@ -65,7 +70,7 @@ export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProp
       setState('success');
     } catch (err: any) {
       console.error('Claim failed:', err);
-      setError(err.message || 'Failed to claim');
+      setError(err.message || 'Failed to claim rewards');
       setState('error');
     }
   };
@@ -78,22 +83,25 @@ export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProp
 
   if (state === 'success') {
     return (
-      <div className={cn('flex flex-col items-center gap-2', className)}>
-        <div className="flex items-center gap-2 text-positive">
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center gap-2 text-[var(--accent)]">
           <CheckCircle className="w-5 h-5" />
-          <span className="text-body-sm font-medium">Claimed!</span>
+          <span className="font-medium">Claimed!</span>
         </div>
         {signature && (
           <a
             href={`https://solscan.io/tx/${signature}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-caption text-ink-500 hover:text-accent flex items-center gap-1"
+            className="text-sm text-[var(--text-muted)] hover:text-[var(--accent)] flex items-center gap-1 transition-colors"
           >
             View transaction <ExternalLink className="w-3 h-3" />
           </a>
         )}
-        <button onClick={reset} className="text-caption text-ink-300 hover:text-ink-700">
+        <button
+          onClick={reset}
+          className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
+        >
           Done
         </button>
       </div>
@@ -102,13 +110,13 @@ export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProp
 
   if (state === 'error') {
     return (
-      <div className={cn('flex flex-col items-center gap-2', className)}>
-        <div className="flex items-center gap-2 text-negative">
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center gap-2 text-red-400">
           <XCircle className="w-5 h-5" />
-          <span className="text-body-sm font-medium">Failed</span>
+          <span className="font-medium">Failed</span>
         </div>
-        <p className="text-caption text-ink-500 text-center max-w-xs">{error}</p>
-        <button onClick={reset} className="btn-secondary btn-sm">
+        <p className="text-sm text-[var(--text-muted)] text-center max-w-xs">{error}</p>
+        <button onClick={reset} className="btn-secondary">
           Try Again
         </button>
       </div>
@@ -119,7 +127,7 @@ export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProp
     <button
       onClick={handleClaim}
       disabled={state === 'loading'}
-      className={cn('btn-primary', className)}
+      className="btn-primary"
     >
       {state === 'loading' ? (
         <>
@@ -128,8 +136,8 @@ export function ClaimButton({ wallet, unclaimedSol, className }: ClaimButtonProp
         </>
       ) : (
         <>
+          <Coins className="w-4 h-4" />
           Claim {formatSol(unclaimedSol)} SOL
-          <ArrowRight className="w-4 h-4" />
         </>
       )}
     </button>

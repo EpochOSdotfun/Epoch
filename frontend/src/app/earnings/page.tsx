@@ -1,89 +1,108 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { Search, Wallet, CheckCircle, Clock, ArrowRight, ChevronRight, ExternalLink, Copy, Check } from 'lucide-react';
+import { Search, Wallet, CheckCircle, Clock, ArrowRight, ExternalLink } from 'lucide-react';
 import { useWalletEarnings } from '@/hooks/useWalletEarnings';
 import { WalletButton } from '@/components/wallet-button';
 import { ClaimButton } from '@/components/claim-button';
-import { EmptyState } from '@/components/empty-state';
-import { EarningsSkeleton } from '@/components/skeleton';
-import { formatSol, formatNumber, shortenAddress, formatDate, cn } from '@/lib/utils';
+import { formatSol, formatNumber, shortenAddress } from '@/lib/utils';
 
 export default function EarningsPage() {
   const { connected, publicKey } = useWallet();
   const [searchAddress, setSearchAddress] = useState('');
-  const [copied, setCopied] = useState(false);
-  
+  const revealRefs = useRef<(HTMLElement | null)[]>([]);
+
   const walletAddress = searchAddress || (connected && publicKey ? publicKey.toBase58() : '');
   const { data: earnings, isLoading, error } = useWalletEarnings(walletAddress);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    revealRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const addRevealRef = (index: number) => (el: HTMLElement | null) => {
+    revealRefs.current[index] = el;
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
   };
 
-  const copyAddress = () => {
-    if (walletAddress) {
-      navigator.clipboard.writeText(walletAddress);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   return (
-    <div className="page-fade min-h-screen">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="border-b border-surface-100 bg-bg-secondary/50">
-        <div className="container-default py-6">
-          <h1 className="text-h2 text-ink-900">Earnings</h1>
-          <p className="text-body text-ink-500 mt-1">
-            Track rewards, view epoch breakdown, claim SOL
+      <section className="container-editorial section-gap pb-16">
+        <div
+          ref={addRevealRef(0)}
+          className="reveal max-w-2xl"
+          style={{ animationDelay: '0ms' }}
+        >
+          <p className="label mb-4">Wallet Lookup</p>
+          <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-6">
+            Your earnings
+          </h1>
+          <p className="text-[var(--text-secondary)] leading-relaxed mb-8">
+            Track rewards by epoch, view your claim history, and withdraw accumulated SOL.
           </p>
-        </div>
-      </header>
 
-      <main className="container-default py-8">
-        {/* Search Bar */}
-        <div className="card-padded mb-8">
-          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-300" />
+          {/* Search Form */}
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
               <input
                 type="text"
-                placeholder="Enter wallet address"
+                placeholder="Enter wallet address..."
                 value={searchAddress}
                 onChange={(e) => setSearchAddress(e.target.value)}
-                className="input pl-10 font-mono text-mono"
+                className="input pl-11"
               />
             </div>
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-secondary">
               Search
             </button>
-            {!connected && (
-              <div className="flex items-center gap-3">
-                <span className="text-caption text-ink-300">or</span>
-                <WalletButton />
-              </div>
-            )}
           </form>
-          
+
+          {!connected && (
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-[var(--text-muted)]">or connect your wallet</span>
+              <WalletButton />
+            </div>
+          )}
+
           {walletAddress && (
-            <div className="mt-4 pt-4 border-t border-surface-100 flex items-center gap-3">
-              <span className="text-caption text-ink-500">Viewing:</span>
-              <code className="font-mono text-mono text-ink-700">{shortenAddress(walletAddress)}</code>
-              <button onClick={copyAddress} className="btn-ghost btn-sm p-1.5">
-                {copied ? <Check className="w-3.5 h-3.5 text-positive" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
+            <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] mt-4">
+              <span>Viewing:</span>
+              <code className="mono text-[var(--accent)]">{shortenAddress(walletAddress)}</code>
             </div>
           )}
         </div>
+      </section>
 
-        {/* Content */}
+      <div className="divider container-editorial" />
+
+      {/* Content */}
+      <section className="container-editorial section-gap">
         {walletAddress ? (
           <>
             {isLoading ? (
-              <EarningsSkeleton />
+              <LoadingState />
             ) : error ? (
               <ErrorState error={error as Error} />
             ) : earnings ? (
@@ -95,7 +114,7 @@ export default function EarningsPage() {
         ) : (
           <EmptyState variant="no-wallet" />
         )}
-      </main>
+      </section>
     </div>
   );
 }
@@ -104,48 +123,41 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
   const hasUnclaimed = Number(earnings.unclaimedSol) > 0;
 
   return (
-    <div className="space-y-8">
-      {/* KPI Grid */}
-      <div className="grid sm:grid-cols-3 gap-6">
-        <div className="kpi-card">
-          <div className="flex items-center gap-2 mb-4">
-            <Wallet className="w-4 h-4 text-ink-500" />
-            <span className="kpi-label mb-0">Total Earned</span>
-          </div>
-          <p className="kpi-value">{formatSol(earnings.totalEarnedSol)} SOL</p>
-          {earnings.totalEarnedToken !== '0' && (
-            <p className="kpi-sublabel">+ {formatNumber(earnings.totalEarnedToken)} tokens</p>
-          )}
-        </div>
-
-        <div className="kpi-card">
-          <div className="flex items-center gap-2 mb-4">
-            <CheckCircle className="w-4 h-4 text-positive" />
-            <span className="kpi-label mb-0">Claimed</span>
-          </div>
-          <p className="kpi-value">{formatSol(earnings.totalClaimedSol)} SOL</p>
-          <p className="kpi-sublabel">{earnings.claimedEpochs} of {earnings.eligibleEpochs} epochs</p>
-        </div>
-
-        <div className="kpi-card">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="w-4 h-4 text-warning" />
-            <span className="kpi-label mb-0">Unclaimed</span>
-          </div>
-          <p className={cn('kpi-value', hasUnclaimed && 'text-accent')}>
-            {formatSol(earnings.unclaimedSol)} SOL
-          </p>
-          <p className="kpi-sublabel">{earnings.eligibleEpochs - earnings.claimedEpochs} epochs pending</p>
-        </div>
+    <div className="space-y-16">
+      {/* Stats Grid */}
+      <div className="grid sm:grid-cols-3 gap-8">
+        <StatCard
+          icon={<Wallet className="w-4 h-4" />}
+          label="Total Earned"
+          value={`${formatSol(earnings.totalEarnedSol)} SOL`}
+          sublabel={
+            earnings.totalEarnedToken !== '0'
+              ? `+ ${formatNumber(earnings.totalEarnedToken)} tokens`
+              : undefined
+          }
+        />
+        <StatCard
+          icon={<CheckCircle className="w-4 h-4" />}
+          label="Claimed"
+          value={`${formatSol(earnings.totalClaimedSol)} SOL`}
+          sublabel={`${earnings.claimedEpochs} of ${earnings.eligibleEpochs} epochs`}
+        />
+        <StatCard
+          icon={<Clock className="w-4 h-4" />}
+          label="Unclaimed"
+          value={`${formatSol(earnings.unclaimedSol)} SOL`}
+          sublabel={`${earnings.eligibleEpochs - earnings.claimedEpochs} epochs pending`}
+          highlight={hasUnclaimed}
+        />
       </div>
 
       {/* Claim Banner */}
       {hasUnclaimed && (
-        <div className="card-padded border-accent/30 bg-accent-subtle">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="card-transparent border-[var(--accent)]/30">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
-              <h3 className="text-title-sm text-ink-900 mb-1">Rewards Available</h3>
-              <p className="text-body-sm text-ink-500">
+              <h3 className="text-xl font-light mb-2">Rewards available</h3>
+              <p className="text-[var(--text-secondary)] text-sm">
                 {formatSol(earnings.unclaimedSol)} SOL from {earnings.eligibleEpochs - earnings.claimedEpochs} unclaimed epochs
               </p>
             </div>
@@ -154,54 +166,65 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
         </div>
       )}
 
-      {/* Epoch Breakdown Table */}
-      <div className="card overflow-hidden">
-        <div className="px-5 py-4 border-b border-surface-100 flex items-center justify-between">
-          <h3 className="text-title-sm text-ink-900">Epoch Breakdown</h3>
-          <Link href="/epochs" className="btn-ghost btn-sm">
+      {/* Epoch Breakdown */}
+      <div>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-light">Epoch breakdown</h3>
+          <Link href="/epochs" className="btn-ghost text-sm">
             View all epochs
-            <ChevronRight className="w-3 h-3" />
+            <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
-        
+
         {earnings.epochBreakdown && earnings.epochBreakdown.length > 0 ? (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Epoch</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th className="hidden md:table-cell">Date</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {earnings.epochBreakdown.map((epoch: any) => (
-                <tr key={epoch.epochId}>
-                  <td className="font-mono font-medium text-ink-900">#{epoch.epochId}</td>
-                  <td className="mono-value">{formatSol(epoch.amount)} SOL</td>
-                  <td>
-                    {epoch.claimed ? (
-                      <span className="badge-positive">Claimed</span>
-                    ) : (
-                      <span className="badge-warning">Pending</span>
-                    )}
-                  </td>
-                  <td className="hidden md:table-cell text-ink-500">
-                    {formatDate(epoch.date)}
-                  </td>
-                  <td className="text-right">
-                    <Link href={`/epoch/${epoch.epochId}`} className="btn-ghost btn-sm">
-                      <ChevronRight className="w-3 h-3" />
-                    </Link>
-                  </td>
+          <div className="card-transparent overflow-hidden">
+            <table className="editorial-table">
+              <thead>
+                <tr>
+                  <th>Epoch</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th className="hidden md:table-cell">Date</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {earnings.epochBreakdown.map((epoch: any) => (
+                  <tr key={epoch.epochId}>
+                    <td className="mono text-[var(--text-primary)]">#{epoch.epochId}</td>
+                    <td>
+                      <span className="text-[var(--text-primary)]">{formatSol(epoch.amount)}</span>
+                      <span className="text-[var(--text-muted)] ml-1">SOL</span>
+                    </td>
+                    <td>
+                      {epoch.claimed ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-[var(--accent)]">
+                          <CheckCircle className="w-3 h-3" />
+                          Claimed
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-amber-400">
+                          <Clock className="w-3 h-3" />
+                          Pending
+                        </span>
+                      )}
+                    </td>
+                    <td className="hidden md:table-cell text-[var(--text-muted)]">
+                      {new Date(epoch.date).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <Link href={`/epoch/${epoch.epochId}`} className="btn-ghost p-2">
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <div className="px-5 py-12 text-center">
-            <p className="text-body-sm text-ink-500">No epoch data available</p>
+          <div className="card-transparent text-center py-12">
+            <p className="text-[var(--text-muted)]">No epoch data available</p>
           </div>
         )}
       </div>
@@ -209,15 +232,73 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
   );
 }
 
+function StatCard({
+  icon,
+  label,
+  value,
+  sublabel,
+  highlight,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sublabel?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className={`card-transparent ${highlight ? 'border-[var(--accent)]/30' : ''}`}>
+      <div className="flex items-center gap-2 mb-4">
+        <span className={highlight ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'}>
+          {icon}
+        </span>
+        <span className="label mb-0">{label}</span>
+      </div>
+      <p className={`text-2xl font-light ${highlight ? 'text-[var(--accent)]' : ''}`}>{value}</p>
+      {sublabel && <p className="text-xs text-[var(--text-muted)] mt-2">{sublabel}</p>}
+    </div>
+  );
+}
+
+function LoadingState() {
+  return (
+    <div className="text-center py-24">
+      <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+      <p className="text-[var(--text-muted)]">Loading earnings data...</p>
+    </div>
+  );
+}
+
 function ErrorState({ error }: { error: Error }) {
   return (
-    <div className="card-padded text-center py-16">
-      <div className="w-12 h-12 rounded-lg bg-negative/10 flex items-center justify-center mx-auto mb-4">
-        <ExternalLink className="w-5 h-5 text-negative" />
+    <div className="text-center py-24">
+      <div className="w-12 h-12 border border-red-400/30 flex items-center justify-center mx-auto mb-4">
+        <ExternalLink className="w-5 h-5 text-red-400" />
       </div>
-      <h3 className="text-title-sm text-ink-900 mb-2">Error Loading Data</h3>
-      <p className="text-body-sm text-ink-500 max-w-sm mx-auto">
+      <h3 className="text-lg font-light mb-2">Error loading data</h3>
+      <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto">
         {error.message || 'Unable to fetch earnings data. Please try again.'}
+      </p>
+    </div>
+  );
+}
+
+function EmptyState({ variant }: { variant: 'no-wallet' | 'no-data' }) {
+  return (
+    <div className="text-center py-24">
+      <div className="w-16 h-16 border border-[var(--border-dim)] flex items-center justify-center mx-auto mb-6">
+        {variant === 'no-wallet' ? (
+          <Search className="w-6 h-6 text-[var(--text-muted)]" />
+        ) : (
+          <Wallet className="w-6 h-6 text-[var(--text-muted)]" />
+        )}
+      </div>
+      <h3 className="text-lg font-light mb-2">
+        {variant === 'no-wallet' ? 'Enter a wallet address' : 'No earnings found'}
+      </h3>
+      <p className="text-[var(--text-muted)] text-sm max-w-md mx-auto">
+        {variant === 'no-wallet'
+          ? 'Connect your wallet or search any Solana address to view earnings.'
+          : 'This wallet has no earnings history yet.'}
       </p>
     </div>
   );

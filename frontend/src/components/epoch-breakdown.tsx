@@ -1,69 +1,105 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
-import { formatSol, formatDate, cn } from '@/lib/utils';
+import { CheckCircle, Clock, ExternalLink } from 'lucide-react';
+import { formatSol, formatDate, shortenAddress } from '@/lib/utils';
 
-interface EpochBreakdownItem {
+interface EpochItem {
   epochId: number;
-  amount: string;
+  earnedSol: string;
+  earnedToken: string;
   claimed: boolean;
-  date: string;
+  claimedSol: string;
+  claimedToken: string;
+  claimedAt: string | null;
+  claimSig: string | null;
+  publishedAt: string;
 }
 
 interface EpochBreakdownProps {
-  epochs: EpochBreakdownItem[];
+  epochs: EpochItem[];
 }
 
 export function EpochBreakdown({ epochs }: EpochBreakdownProps) {
-  if (!epochs || epochs.length === 0) {
+  if (epochs.length === 0) {
     return (
-      <div className="text-center py-8">
-        <p className="text-body-sm text-ink-500">No epoch data available</p>
+      <div className="text-center py-8 text-text-muted">
+        No epochs found for this wallet
       </div>
     );
   }
 
   return (
-    <div className="space-y-2">
-      {epochs.map((epoch) => (
-        <div
-          key={epoch.epochId}
-          className={cn(
-            'flex items-center justify-between p-4 rounded-lg border transition-colors duration-180',
-            epoch.claimed 
-              ? 'border-surface-100 bg-bg-tertiary/50' 
-              : 'border-accent/20 bg-accent-subtle'
-          )}
-        >
-          <div className="flex items-center gap-4">
-            <span className="font-mono text-body-sm font-medium text-ink-900">
-              #{epoch.epochId}
-            </span>
-            <span className="text-body-sm text-ink-700">
-              {formatSol(epoch.amount)} SOL
-            </span>
-            <span className={cn(
-              'badge',
-              epoch.claimed ? 'badge-positive' : 'badge-warning'
-            )}>
-              {epoch.claimed ? 'Claimed' : 'Pending'}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <span className="text-caption text-ink-500 hidden sm:block">
-              {formatDate(epoch.date)}
-            </span>
-            <Link
-              href={`/epoch/${epoch.epochId}`}
-              className="btn-ghost btn-sm p-1"
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="text-left text-text-muted text-sm border-b border-border-default">
+            <th className="pb-3 font-medium">Epoch</th>
+            <th className="pb-3 font-medium">Earned</th>
+            <th className="pb-3 font-medium">Status</th>
+            <th className="pb-3 font-medium">Date</th>
+            <th className="pb-3 font-medium"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {epochs.map((epoch) => (
+            <tr
+              key={epoch.epochId}
+              className="border-b border-border-default/50 hover:bg-bg-elevated/50 transition-colors"
             >
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      ))}
+              <td className="py-4">
+                <Link
+                  href={`/epoch/${epoch.epochId}`}
+                  className="text-accent-primary hover:underline font-mono"
+                >
+                  #{epoch.epochId}
+                </Link>
+              </td>
+              <td className="py-4">
+                <div className="font-semibold">{formatSol(epoch.earnedSol)} SOL</div>
+                {epoch.earnedToken !== '0' && (
+                  <div className="text-sm text-text-muted">
+                    + {epoch.earnedToken} tokens
+                  </div>
+                )}
+              </td>
+              <td className="py-4">
+                {epoch.claimed ? (
+                  <div className="flex items-center gap-2 text-accent-primary">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Claimed</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-accent-warning">
+                    <Clock className="w-4 h-4" />
+                    <span>Unclaimed</span>
+                  </div>
+                )}
+              </td>
+              <td className="py-4 text-text-secondary text-sm">
+                {epoch.claimed && epoch.claimedAt
+                  ? formatDate(epoch.claimedAt)
+                  : formatDate(epoch.publishedAt)}
+              </td>
+              <td className="py-4">
+                {epoch.claimSig && (
+                  <a
+                    href={`https://solscan.io/tx/${epoch.claimSig}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-muted hover:text-accent-primary transition-colors"
+                    title="View transaction"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
+
+
