@@ -1,108 +1,99 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { 
-  Search, 
-  Wallet, 
-  CheckCircle, 
-  Clock, 
-  TrendingUp,
-  Download,
-  ExternalLink,
-  ChevronRight
-} from 'lucide-react';
+import { Search, Wallet, CheckCircle, Clock, ArrowRight, ChevronRight, ExternalLink, Copy, Check } from 'lucide-react';
 import { useWalletEarnings } from '@/hooks/useWalletEarnings';
 import { WalletButton } from '@/components/wallet-button';
 import { ClaimButton } from '@/components/claim-button';
-import { EpochBreakdown } from '@/components/epoch-breakdown';
 import { formatSol, formatNumber, shortenAddress } from '@/lib/utils';
-import { ShimmerCard, SpringChart, MiniSparkline } from '@/components/animations';
 
 export default function EarningsPage() {
-  const { publicKey, connected } = useWallet();
-  const [inputAddress, setInputAddress] = useState('');
+  const { connected, publicKey } = useWallet();
   const [searchAddress, setSearchAddress] = useState('');
-
-  const walletAddress = connected ? publicKey?.toBase58() : searchAddress;
-  const { data: earnings, isLoading, error } = useWalletEarnings(walletAddress || '');
+  const [copied, setCopied] = useState(false);
+  
+  const walletAddress = searchAddress || (connected && publicKey ? publicKey.toBase58() : '');
+  const { data: earnings, isLoading, error } = useWalletEarnings(walletAddress);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearchAddress(inputAddress);
+  };
+
+  const copyAddress = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="container-default">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-12"
-        >
-          <p className="text-caption text-accent-primary uppercase tracking-wider mb-3">
-            Dashboard
-          </p>
-          <h1 className="text-display-md mb-4">
-            Your <span className="text-gradient">Earnings</span>
-          </h1>
-          <p className="text-body-lg text-text-secondary max-w-2xl">
-            Track your rewards, view epoch breakdowns, and claim your SOL. 
-            All data is verifiable on-chain.
-          </p>
-        </motion.div>
-
-        {/* Wallet Input */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="card mb-8"
-        >
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="flex-1 w-full">
-              <form onSubmit={handleSearch} className="flex gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
-                  <input
-                    type="text"
-                    placeholder="Enter wallet address..."
-                    value={inputAddress}
-                    onChange={(e) => setInputAddress(e.target.value)}
-                    className="input pl-12"
-                    disabled={connected}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="btn-secondary"
-                  disabled={connected || !inputAddress}
-                >
-                  Search
-                </button>
-              </form>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-text-muted text-body-sm">or</span>
-              <WalletButton />
-            </div>
+    <div className="page-fade min-h-screen">
+      {/* Header */}
+      <header className="border-b border-surface-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container-default h-16 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-ink-900 rounded flex items-center justify-center">
+                <span className="text-white font-semibold text-sm">E</span>
+              </div>
+              <span className="font-semibold text-ink-900">Epoch</span>
+            </Link>
+            <nav className="hidden md:flex items-center gap-6">
+              <Link href="/epochs" className="text-body-sm text-ink-500 hover:text-ink-900 transition-colors">
+                Epochs
+              </Link>
+              <Link href="/earnings" className="text-body-sm text-ink-900 font-medium">
+                Earnings
+              </Link>
+            </nav>
           </div>
+          <WalletButton />
+        </div>
+      </header>
 
-          {connected && publicKey && (
-            <div className="mt-4 flex items-center gap-2 text-text-secondary">
-              <div className="w-2 h-2 rounded-full bg-accent-primary" />
-              <span className="text-body-sm">Connected: </span>
-              <code className="text-accent-primary font-mono text-body-sm">
-                {shortenAddress(publicKey.toBase58())}
-              </code>
+      <main className="container-default py-12">
+        {/* Page Title */}
+        <div className="mb-10">
+          <h1 className="text-title-lg text-ink-900 mb-2">Earnings Dashboard</h1>
+          <p className="text-body text-ink-500">
+            Track rewards, view epoch breakdown, and claim your SOL
+          </p>
+        </div>
+
+        {/* Search Bar */}
+        <div className="card-padded mb-8">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-300" />
+              <input
+                type="text"
+                placeholder="Enter wallet address"
+                value={searchAddress}
+                onChange={(e) => setSearchAddress(e.target.value)}
+                className="input pl-10 font-mono text-mono"
+              />
+            </div>
+            <button type="submit" className="btn-primary">
+              Search
+            </button>
+          </form>
+          
+          {walletAddress && (
+            <div className="mt-4 pt-4 border-t border-surface-100 flex items-center gap-3">
+              <span className="text-caption text-ink-500">Viewing:</span>
+              <code className="font-mono text-mono text-ink-700">{shortenAddress(walletAddress)}</code>
+              <button onClick={copyAddress} className="btn-ghost btn-sm p-1.5">
+                {copied ? <Check className="w-3.5 h-3.5 text-positive" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
             </div>
           )}
-        </motion.div>
+        </div>
 
-        {/* Earnings Content */}
-        {walletAddress && (
+        {/* Content */}
+        {walletAddress ? (
           <>
             {isLoading ? (
               <LoadingState />
@@ -114,229 +105,185 @@ export default function EarningsPage() {
               <EmptyState type="no-data" />
             )}
           </>
+        ) : (
+          <EmptyState type="no-wallet" />
         )}
+      </main>
+    </div>
+  );
+}
 
-        {/* Empty State - No Wallet */}
-        {!walletAddress && <EmptyState type="no-wallet" />}
+function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAddress: string }) {
+  const hasUnclaimed = Number(earnings.unclaimedSol) > 0;
+
+  return (
+    <div className="space-y-8">
+      {/* KPI Grid */}
+      <div className="grid sm:grid-cols-3 gap-6">
+        <div className="kpi-card">
+          <div className="flex items-center gap-2 mb-4">
+            <Wallet className="w-4 h-4 text-ink-500" />
+            <span className="kpi-label mb-0">Total Earned</span>
+          </div>
+          <p className="kpi-value">{formatSol(earnings.totalEarnedSol)} SOL</p>
+          {earnings.totalEarnedToken !== '0' && (
+            <p className="kpi-sublabel">+ {formatNumber(earnings.totalEarnedToken)} tokens</p>
+          )}
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center gap-2 mb-4">
+            <CheckCircle className="w-4 h-4 text-positive" />
+            <span className="kpi-label mb-0">Claimed</span>
+          </div>
+          <p className="kpi-value">{formatSol(earnings.totalClaimedSol)} SOL</p>
+          <p className="kpi-sublabel">{earnings.claimedEpochs} of {earnings.eligibleEpochs} epochs</p>
+        </div>
+
+        <div className="kpi-card">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="w-4 h-4 text-warning" />
+            <span className="kpi-label mb-0">Unclaimed</span>
+          </div>
+          <p className={`kpi-value ${hasUnclaimed ? 'text-accent' : ''}`}>
+            {formatSol(earnings.unclaimedSol)} SOL
+          </p>
+          <p className="kpi-sublabel">{earnings.eligibleEpochs - earnings.claimedEpochs} epochs pending</p>
+        </div>
+      </div>
+
+      {/* Claim Banner */}
+      {hasUnclaimed && (
+        <div className="card-padded border-accent/30 bg-accent-subtle">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-title-sm text-ink-900 mb-1">Rewards Available</h3>
+              <p className="text-body-sm text-ink-500">
+                {formatSol(earnings.unclaimedSol)} SOL from {earnings.eligibleEpochs - earnings.claimedEpochs} unclaimed epochs
+              </p>
+            </div>
+            <button className="btn-accent">
+              Claim All
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Epoch Breakdown Table */}
+      <div className="card overflow-hidden">
+        <div className="px-6 py-4 border-b border-surface-200 flex items-center justify-between">
+          <h3 className="text-title-sm text-ink-900">Epoch Breakdown</h3>
+          <Link href="/epochs" className="btn-ghost btn-sm">
+            View all epochs
+            <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+        
+        {earnings.epochBreakdown && earnings.epochBreakdown.length > 0 ? (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Epoch</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {earnings.epochBreakdown.map((epoch: any) => (
+                <tr key={epoch.epochId}>
+                  <td className="font-medium text-ink-900">#{epoch.epochId}</td>
+                  <td className="mono-value">{formatSol(epoch.amount)} SOL</td>
+                  <td>
+                    {epoch.claimed ? (
+                      <span className="badge-positive">Claimed</span>
+                    ) : (
+                      <span className="badge-warning">Pending</span>
+                    )}
+                  </td>
+                  <td className="text-ink-500">
+                    {new Date(epoch.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </td>
+                  <td className="text-right">
+                    <Link href={`/epoch/${epoch.epochId}`} className="btn-ghost btn-sm">
+                      <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="px-6 py-12 text-center">
+            <p className="text-body-sm text-ink-500">No epoch data available</p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ============================================
-// EARNINGS CONTENT
-// ============================================
-function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAddress: string }) {
-  // Mock sparkline data for demo
-  const sparklineData = [4.2, 5.1, 4.8, 6.2, 5.5, 7.1, 6.3, 7.8, 6.9, 8.2];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-    >
-      {/* Stats Grid */}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <ShimmerCard delay={0}>
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-2.5 rounded-xl bg-accent-muted">
-              <TrendingUp className="w-5 h-5 text-accent-primary" />
-            </div>
-            <MiniSparkline data={sparklineData} className="opacity-60" />
-          </div>
-          <p className="text-caption text-text-muted uppercase tracking-wider mb-1">
-            Total Earned
-          </p>
-          <p className="text-display-md font-display">
-            {formatSol(earnings.totalEarnedSol)} <span className="text-text-muted text-body-lg">SOL</span>
-          </p>
-          {earnings.totalEarnedToken !== '0' && (
-            <p className="text-body-sm text-text-secondary mt-1">
-              + {formatNumber(earnings.totalEarnedToken)} tokens
-            </p>
-          )}
-        </ShimmerCard>
-
-        <ShimmerCard delay={100}>
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-2.5 rounded-xl bg-accent-muted">
-              <CheckCircle className="w-5 h-5 text-accent-primary" />
-            </div>
-            <span className="badge-neutral text-caption">
-              {earnings.claimedEpochs} epochs
-            </span>
-          </div>
-          <p className="text-caption text-text-muted uppercase tracking-wider mb-1">
-            Claimed
-          </p>
-          <p className="text-display-md font-display">
-            {formatSol(earnings.totalClaimedSol)} <span className="text-text-muted text-body-lg">SOL</span>
-          </p>
-        </ShimmerCard>
-
-        <ShimmerCard delay={200} className="gradient-border">
-          <div className="flex items-start justify-between mb-4">
-            <div className="p-2.5 rounded-xl bg-accent-primary/20">
-              <Clock className="w-5 h-5 text-accent-primary" />
-            </div>
-            <span className="badge-accent text-caption">
-              {earnings.eligibleEpochs - earnings.claimedEpochs} pending
-            </span>
-          </div>
-          <p className="text-caption text-text-muted uppercase tracking-wider mb-1">
-            Unclaimed
-          </p>
-          <p className="text-display-md font-display glow-text-subtle">
-            {formatSol(earnings.unclaimedSol)} <span className="text-text-muted text-body-lg">SOL</span>
-          </p>
-        </ShimmerCard>
-      </div>
-
-      {/* Claim Section */}
-      {Number(earnings.unclaimedSol) > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="card-accent mb-8"
-        >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-accent-primary/20 flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-accent-primary" />
-              </div>
-              <div>
-                <h3 className="text-heading-md mb-1">
-                  Rewards Available
-                </h3>
-                <p className="text-body-md text-text-secondary">
-                  {formatSol(earnings.unclaimedSol)} SOL from{' '}
-                  {earnings.eligibleEpochs - earnings.claimedEpochs} unclaimed epochs
-                </p>
-              </div>
-            </div>
-            <ClaimButton
-              wallet={walletAddress}
-              unclaimedSol={earnings.unclaimedSol}
-            />
-          </div>
-        </motion.div>
-      )}
-
-      {/* Earnings Chart */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="card mb-8"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-heading-md">Earnings History</h3>
-            <p className="text-body-sm text-text-muted">Last 12 epochs</p>
-          </div>
-          <button className="btn-ghost btn-sm">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
-        </div>
-        <SpringChart
-          data={[4.2, 5.1, 4.8, 6.2, 5.5, 7.1, 6.3, 7.8, 6.9, 8.2, 7.4, 8.9]}
-          variant="area"
-          height={200}
-        />
-      </motion.div>
-
-      {/* Epoch Breakdown */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="card"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-heading-md">Epoch Breakdown</h3>
-          <a href="/epochs" className="btn-ghost btn-sm">
-            View All
-            <ChevronRight className="w-4 h-4" />
-          </a>
-        </div>
-        <EpochBreakdown epochs={earnings.epochBreakdown} />
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// ============================================
-// LOADING STATE
-// ============================================
 function LoadingState() {
   return (
-    <div className="space-y-6">
-      <div className="grid md:grid-cols-3 gap-6">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="card">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-bg-elevated animate-pulse" />
-              <div className="w-16 h-5 rounded bg-bg-elevated animate-pulse" />
-            </div>
-            <div className="w-24 h-3 rounded bg-bg-elevated animate-pulse mb-2" />
-            <div className="w-32 h-8 rounded bg-bg-elevated animate-pulse" />
+    <div className="space-y-8">
+      <div className="grid sm:grid-cols-3 gap-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="card-padded">
+            <div className="skeleton h-4 w-24 mb-4" />
+            <div className="skeleton h-8 w-32 mb-2" />
+            <div className="skeleton h-3 w-20" />
           </div>
         ))}
       </div>
-      <div className="card">
-        <div className="w-48 h-6 rounded bg-bg-elevated animate-pulse mb-6" />
-        <div className="h-48 rounded bg-bg-elevated animate-pulse" />
+      <div className="card-padded">
+        <div className="skeleton h-6 w-40 mb-6" />
+        <div className="space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="skeleton h-12 w-full" />
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// ============================================
-// ERROR STATE
-// ============================================
 function ErrorState({ error }: { error: Error }) {
   return (
-    <div className="card text-center py-16">
-      <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-accent-error/10 flex items-center justify-center">
-        <ExternalLink className="w-8 h-8 text-accent-error" />
+    <div className="card-padded text-center py-16">
+      <div className="w-12 h-12 rounded-md bg-negative/10 flex items-center justify-center mx-auto mb-4">
+        <ExternalLink className="w-5 h-5 text-negative" />
       </div>
-      <h3 className="text-heading-md mb-2">Error Loading Data</h3>
-      <p className="text-body-md text-text-secondary max-w-md mx-auto">
+      <h3 className="text-title-sm text-ink-900 mb-2">Error Loading Data</h3>
+      <p className="text-body-sm text-ink-500 max-w-sm mx-auto">
         {error.message || 'Unable to fetch earnings data. Please try again.'}
       </p>
     </div>
   );
 }
 
-// ============================================
-// EMPTY STATE
-// ============================================
 function EmptyState({ type }: { type: 'no-wallet' | 'no-data' }) {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.2 }}
-      className="card text-center py-16"
-    >
-      <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-bg-tertiary flex items-center justify-center">
+    <div className="card-padded text-center py-16">
+      <div className="w-12 h-12 rounded-md bg-surface-100 flex items-center justify-center mx-auto mb-4">
         {type === 'no-wallet' ? (
-          <Search className="w-8 h-8 text-text-muted" />
+          <Search className="w-5 h-5 text-ink-500" />
         ) : (
-          <Wallet className="w-8 h-8 text-text-muted" />
+          <Wallet className="w-5 h-5 text-ink-500" />
         )}
       </div>
-      <h3 className="text-heading-md mb-2">
+      <h3 className="text-title-sm text-ink-900 mb-2">
         {type === 'no-wallet' ? 'Enter a Wallet Address' : 'No Earnings Found'}
       </h3>
-      <p className="text-body-md text-text-secondary max-w-md mx-auto">
+      <p className="text-body-sm text-ink-500 max-w-sm mx-auto">
         {type === 'no-wallet'
           ? 'Connect your wallet or enter any Solana address to view earnings and claim history.'
           : 'This wallet has no recorded earnings. Hold tokens to become eligible for rewards.'}
       </p>
-    </motion.div>
+    </div>
   );
 }

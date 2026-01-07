@@ -1,140 +1,96 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ExternalLink } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { useState } from 'react';
 import { WalletButton } from './wallet-button';
+import { cn } from '@/lib/utils';
 
-const navLinks = [
+const navItems = [
   { href: '/', label: 'Home' },
-  { href: '/earnings', label: 'Dashboard' },
+  { href: '/earnings', label: 'Earnings' },
   { href: '/epochs', label: 'Epochs' },
-  { href: '#', label: 'Docs', external: true },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <>
-      <motion.nav
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled 
-            ? 'bg-bg-primary/80 backdrop-blur-xl border-b border-border-subtle shadow-lg shadow-black/10' 
-            : 'bg-transparent'
-        }`}
-      >
-        <div className="container-default">
-          <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <motion.div 
-                className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className="text-bg-primary font-bold text-sm">E</span>
-              </motion.div>
-              <span className="font-display font-bold text-lg hidden sm:block">
-                EpochOS
-              </span>
-            </Link>
+    <nav className="sticky top-0 z-50 border-b border-surface-200 bg-white/80 backdrop-blur-sm">
+      <div className="container-default">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-ink-900 rounded flex items-center justify-center">
+              <span className="text-white font-semibold text-sm">E</span>
+            </div>
+            <span className="font-semibold text-ink-900 hidden sm:block">Epoch</span>
+          </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => (
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'px-4 py-2 rounded text-body-sm font-medium transition-colors',
+                  pathname === item.href
+                    ? 'text-ink-900 bg-surface-100'
+                    : 'text-ink-500 hover:text-ink-900 hover:bg-surface-50'
+                )}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Wallet Button */}
+          <div className="hidden md:block">
+            <WalletButton />
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded hover:bg-surface-100 transition-colors"
+          >
+            {mobileOpen ? (
+              <X className="w-5 h-5 text-ink-700" />
+            ) : (
+              <Menu className="w-5 h-5 text-ink-700" />
+            )}
+          </button>
+        </div>
+
+        {/* Mobile Nav */}
+        {mobileOpen && (
+          <div className="md:hidden py-4 border-t border-surface-200">
+            <div className="flex flex-col gap-1">
+              {navItems.map((item) => (
                 <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`px-4 py-2 rounded-lg text-body-sm transition-colors ${
-                    pathname === link.href
-                      ? 'text-accent-primary bg-accent-muted'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-                  }`}
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    'px-4 py-3 rounded font-medium transition-colors',
+                    pathname === item.href
+                      ? 'bg-surface-100 text-ink-900'
+                      : 'text-ink-500 hover:text-ink-900 hover:bg-surface-50'
+                  )}
                 >
-                  <span className="flex items-center gap-1.5">
-                    {link.label}
-                    {link.external && <ExternalLink className="w-3 h-3" />}
-                  </span>
+                  {item.label}
                 </Link>
               ))}
-            </div>
-
-            {/* Right side */}
-            <div className="flex items-center gap-3">
-              <WalletButton />
-              
-              {/* Mobile menu button */}
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-lg hover:bg-bg-elevated transition-colors"
-              >
-                {isMobileMenuOpen ? (
-                  <X className="w-5 h-5" />
-                ) : (
-                  <Menu className="w-5 h-5" />
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.nav>
-
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-16 z-40 md:hidden bg-bg-secondary/95 backdrop-blur-xl border-b border-border-default"
-          >
-            <div className="container-default py-4">
-              <div className="flex flex-col gap-1">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`px-4 py-3 rounded-lg text-body-md transition-colors ${
-                      pathname === link.href
-                        ? 'text-accent-primary bg-accent-muted'
-                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      {link.label}
-                      {link.external && <ExternalLink className="w-4 h-4" />}
-                    </span>
-                  </Link>
-                ))}
+              <div className="pt-4 px-4">
+                <WalletButton />
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-
-      {/* Spacer */}
-      <div className="h-16 md:h-20" />
-    </>
+      </div>
+    </nav>
   );
 }
-
-export default Navbar;

@@ -7,86 +7,72 @@ import { useState, useRef, useEffect } from 'react';
 import { shortenAddress } from '@/lib/utils';
 
 export function WalletButton() {
-  const { publicKey, disconnect, connected, connecting } = useWallet();
+  const { connected, publicKey, disconnect } = useWallet();
   const { setVisible } = useWalletModal();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
+        setShowDropdown(false);
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleCopy = async () => {
+  const copyAddress = () => {
     if (publicKey) {
-      await navigator.clipboard.writeText(publicKey.toBase58());
+      navigator.clipboard.writeText(publicKey.toBase58());
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  if (!connected) {
+  if (connected && publicKey) {
     return (
-      <button
-        onClick={() => setVisible(true)}
-        disabled={connecting}
-        className="btn-primary"
-      >
-        {connecting ? (
-          <div className="animate-spin w-4 h-4 border-2 border-bg-primary border-t-transparent rounded-full" />
-        ) : (
-          <Wallet className="w-4 h-4" />
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="btn-secondary btn-sm"
+        >
+          <div className="w-2 h-2 rounded-full bg-positive" />
+          <span className="font-mono text-mono">{shortenAddress(publicKey.toBase58())}</span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+        </button>
+
+        {showDropdown && (
+          <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-surface-200 rounded-md shadow-elevated py-1 z-50">
+            <button
+              onClick={copyAddress}
+              className="w-full px-4 py-2.5 text-body-sm text-ink-700 hover:bg-surface-50 flex items-center gap-2 transition-colors"
+            >
+              {copied ? <Check className="w-4 h-4 text-positive" /> : <Copy className="w-4 h-4" />}
+              {copied ? 'Copied!' : 'Copy Address'}
+            </button>
+            <div className="border-t border-surface-100 my-1" />
+            <button
+              onClick={() => {
+                disconnect();
+                setShowDropdown(false);
+              }}
+              className="w-full px-4 py-2.5 text-body-sm text-negative hover:bg-surface-50 flex items-center gap-2 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Disconnect
+            </button>
+          </div>
         )}
-        {connecting ? 'Connecting...' : 'Connect Wallet'}
-      </button>
+      </div>
     );
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="btn-secondary"
-      >
-        <div className="w-2 h-2 rounded-full bg-accent-primary" />
-        <span>{shortenAddress(publicKey!.toBase58())}</span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-bg-secondary border border-border-default rounded-lg shadow-xl overflow-hidden z-50">
-          <button
-            onClick={handleCopy}
-            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-bg-elevated transition-colors text-left"
-          >
-            {copied ? (
-              <Check className="w-4 h-4 text-accent-primary" />
-            ) : (
-              <Copy className="w-4 h-4 text-text-muted" />
-            )}
-            <span>{copied ? 'Copied!' : 'Copy Address'}</span>
-          </button>
-          <button
-            onClick={() => {
-              disconnect();
-              setDropdownOpen(false);
-            }}
-            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-bg-elevated transition-colors text-left text-accent-error"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Disconnect</span>
-          </button>
-        </div>
-      )}
-    </div>
+    <button onClick={() => setVisible(true)} className="btn-primary btn-sm">
+      <Wallet className="w-4 h-4" />
+      Connect Wallet
+    </button>
   );
 }
-
-
