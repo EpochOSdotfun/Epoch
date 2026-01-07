@@ -1,400 +1,640 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { useRef } from 'react';
 import Link from 'next/link';
 import { 
-  Shield, 
-  Zap, 
-  Clock, 
   ArrowRight, 
-  CheckCircle2, 
-  TrendingUp,
-  Lock,
-  FileCheck,
-  BarChart3
+  Shield, 
+  Clock, 
+  Zap, 
+  BarChart3, 
+  Lock, 
+  Users,
+  CheckCircle,
+  ChevronRight
 } from 'lucide-react';
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
+import { 
+  LiquidRibbon, 
+  AnimatedSectionDivider, 
+  MetricCard,
+  SpringChart,
+  BrowserMockup,
+  DashboardPreviewContent 
+} from '@/components/animations';
 
-const stagger = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
+// ============================================
+// ENTERPRISE PRODUCT SITE
+// Clean • Calm • Trustworthy
+// ============================================
 
-export default function HomePage() {
+export default function Home() {
   return (
-    <div className="relative">
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden">
-        {/* Animated background */}
-        <div className="flow-lines" />
-        
-        {/* Gradient orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-accent/3 rounded-full blur-3xl animate-pulse-slow delay-1000" />
+    <div className="min-h-screen overflow-hidden">
+      <HeroSection />
+      <AnimatedSectionDivider />
+      <MetricsSection />
+      <AnimatedSectionDivider />
+      <FeaturesSection />
+      <AnimatedSectionDivider />
+      <HowItWorksSection />
+      <AnimatedSectionDivider />
+      <TrustSection />
+      <AnimatedSectionDivider />
+      <CTASection />
+      <Footer />
+    </div>
+  );
+}
 
-        <div className="container-wide relative z-10 py-24">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto text-center"
-          >
-            {/* Badge */}
+// ============================================
+// HERO SECTION
+// ============================================
+function HeroSection() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"]
+  });
+
+  const y = useTransform(scrollYProgress, [0, 1], [0, 100]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+
+  return (
+    <section ref={containerRef} className="relative min-h-screen flex items-center justify-center py-20 px-4">
+      {/* Liquid ribbon background */}
+      <LiquidRibbon className="opacity-60" />
+      
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-hero-gradient pointer-events-none" />
+      
+      {/* Content */}
+      <motion.div 
+        className="relative z-10 container-default"
+        style={{ y, opacity }}
+      >
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          {/* Left: Copy */}
+          <div className="text-center lg:text-left">
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-muted border border-accent/20 mb-8"
-            >
-              <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-accent-light">Live on Solana Mainnet</span>
-            </motion.div>
-
-            {/* Hero Title */}
-            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-display text-balance mb-6"
+              transition={{ duration: 0.6 }}
             >
-              Earn SOL from liquidity fees—
-              <span className="text-gradient">verifiable, transparent, automated.</span>
+              {/* Status badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-muted border border-accent-primary/20 mb-8">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-primary" />
+                </span>
+                <span className="text-accent-primary text-body-sm font-medium">
+                  Live on Solana Mainnet
+                </span>
+              </div>
+            </motion.div>
+
+            <motion.h1
+              className="text-display-xl mb-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              Automated Rewards
+              <br />
+              <span className="text-gradient">Built for Scale</span>
             </motion.h1>
 
-            {/* Hero Description */}
             <motion.p
-              initial={{ opacity: 0, y: 20 }}
+              className="text-body-lg text-text-secondary max-w-xl mb-10"
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-xl text-foreground-secondary mb-10 max-w-2xl mx-auto text-balance"
+              transition={{ duration: 0.6, delay: 0.2 }}
             >
-              The Solana flywheel that routes protocol fees to token holders. 
-              Claim your share from every epoch with cryptographic proofs.
+              Enterprise-grade token distribution infrastructure. 
+              Transparent Merkle proofs, automated epoch cycles, 
+              and verifiable on-chain claims.
             </motion.p>
 
-            {/* CTAs */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+              transition={{ duration: 0.6, delay: 0.3 }}
             >
               <Link href="/earnings" className="btn-primary btn-lg group">
-                Open Earnings Dashboard
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                View Dashboard
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </Link>
-              <Link href="/epochs" className="btn-secondary btn-lg">
-                View Live Metrics
-              </Link>
+              <a href="#how-it-works" className="btn-secondary btn-lg">
+                How It Works
+              </a>
             </motion.div>
 
-            {/* Stats bar */}
+            {/* Trust indicators */}
             <motion.div
+              className="flex flex-wrap gap-6 mt-12 justify-center lg:justify-start"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
-              className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto"
+              transition={{ duration: 0.6, delay: 0.5 }}
             >
-              {[
-                { label: 'Total Distributed', value: '847.2 SOL' },
-                { label: 'Active Holders', value: '2,341' },
-                { label: 'Current Epoch', value: '#127' },
-                { label: 'Avg. APY', value: '12.4%' },
-              ].map((stat, i) => (
-                <div key={i} className="text-center">
-                  <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
-                  <p className="text-sm text-foreground-muted">{stat.label}</p>
-                </div>
-              ))}
+              <div className="flex items-center gap-2 text-text-muted">
+                <Shield className="w-4 h-4" />
+                <span className="text-body-sm">Audited</span>
+              </div>
+              <div className="flex items-center gap-2 text-text-muted">
+                <Lock className="w-4 h-4" />
+                <span className="text-body-sm">Non-custodial</span>
+              </div>
+              <div className="flex items-center gap-2 text-text-muted">
+                <Users className="w-4 h-4" />
+                <span className="text-body-sm">12,000+ Holders</span>
+              </div>
             </motion.div>
+          </div>
+
+          {/* Right: Browser mockup */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="relative"
+          >
+            <BrowserMockup enableGlow>
+              <DashboardPreviewContent />
+            </BrowserMockup>
           </motion.div>
         </div>
-      </section>
+      </motion.div>
 
-      {/* Features Section */}
-      <section className="py-24 bg-background-secondary">
-        <div className="container-wide">
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={stagger}
-            className="text-center mb-16"
-          >
-            <motion.p variants={fadeInUp} className="text-accent font-medium mb-3">
-              Why Liquid
-            </motion.p>
-            <motion.h2 variants={fadeInUp} className="text-h1 text-balance">
-              Built for trust, designed for scale
-            </motion.h2>
-          </motion.div>
+      {/* Scroll indicator */}
+      <motion.div
+        className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1, duration: 0.6 }}
+      >
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className="flex flex-col items-center gap-2 text-text-muted"
+        >
+          <span className="text-caption uppercase tracking-wider">Scroll</span>
+          <ChevronRight className="w-4 h-4 rotate-90" />
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}
 
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={stagger}
-            className="grid md:grid-cols-3 gap-6"
-          >
-            {[
-              {
-                icon: Shield,
-                title: 'Verifiable Payouts',
-                description: 'Every distribution includes a Merkle proof. Verify your allocation on-chain without trust assumptions.',
-              },
-              {
-                icon: Zap,
-                title: 'Automated Flywheel',
-                description: 'LP fees flow through swap, buyback, burn, and distribution automatically. No manual intervention required.',
-              },
-              {
-                icon: Clock,
-                title: 'Transparent Epochs',
-                description: 'Clear epoch boundaries with published roots. Track every SOL from collection to distribution.',
-              },
-            ].map((feature, i) => (
-              <motion.div
-                key={i}
-                variants={fadeInUp}
-                className="card-interactive group"
-              >
-                <div className="w-12 h-12 rounded-xl bg-accent-muted flex items-center justify-center mb-5 group-hover:glow-accent transition-shadow">
-                  <feature.icon className="w-6 h-6 text-accent" />
-                </div>
-                <h3 className="text-h3 mb-2">{feature.title}</h3>
-                <p className="text-foreground-secondary">{feature.description}</p>
-              </motion.div>
-            ))}
-          </motion.div>
+// ============================================
+// METRICS SECTION
+// ============================================
+function MetricsSection() {
+  return (
+    <section className="section bg-section-gradient">
+      <div className="container-default">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <p className="text-caption text-accent-primary uppercase tracking-wider mb-4">
+            Protocol Metrics
+          </p>
+          <h2 className="text-display-md mb-4">
+            Transparent Performance Data
+          </h2>
+          <p className="text-body-lg text-text-secondary max-w-2xl mx-auto">
+            Real-time metrics updated every epoch. All data is verifiable on-chain.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard
+            icon={<BarChart3 className="w-5 h-5 text-accent-primary" />}
+            label="Total Distributed"
+            value="847.23"
+            suffix="SOL"
+            trend={{ value: "12.4%", positive: true }}
+            delay={0}
+          />
+          <MetricCard
+            icon={<Users className="w-5 h-5 text-accent-primary" />}
+            label="Unique Holders"
+            value="12,847"
+            trend={{ value: "324", positive: true }}
+            delay={100}
+          />
+          <MetricCard
+            icon={<Clock className="w-5 h-5 text-accent-primary" />}
+            label="Current Epoch"
+            value="127"
+            delay={200}
+          />
+          <MetricCard
+            icon={<Zap className="w-5 h-5 text-accent-primary" />}
+            label="Avg. Epoch Rewards"
+            value="6.67"
+            suffix="SOL"
+            delay={300}
+          />
         </div>
-      </section>
 
-      {/* How It Works Section */}
-      <section className="py-24">
-        <div className="container-wide">
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={stagger}
-            className="text-center mb-16"
-          >
-            <motion.p variants={fadeInUp} className="text-accent font-medium mb-3">
-              How It Works
-            </motion.p>
-            <motion.h2 variants={fadeInUp} className="text-h1 text-balance">
-              From fees to your wallet in four steps
-            </motion.h2>
-          </motion.div>
+        {/* Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-12 card"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-heading-md">Distribution History</h3>
+              <p className="text-body-sm text-text-muted">Last 30 epochs</p>
+            </div>
+            <div className="badge-accent">
+              +23.4% growth
+            </div>
+          </div>
+          <SpringChart
+            data={[4.2, 5.1, 4.8, 6.2, 5.5, 7.1, 6.3, 7.8, 6.9, 8.2, 7.4, 8.9]}
+            variant="area"
+            height={200}
+          />
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={stagger}
-            className="max-w-4xl mx-auto"
-          >
-            {[
-              {
-                step: '01',
-                title: 'Collect Fees',
-                description: 'LP positions accumulate trading fees automatically from Orca and Raydium pools.',
-                icon: BarChart3,
-              },
-              {
-                step: '02',
-                title: 'Swap & Route',
-                description: 'The keeper bot swaps collected fees to SOL and routes them through the flywheel.',
-                icon: TrendingUp,
-              },
-              {
-                step: '03',
-                title: 'Publish Epoch',
-                description: 'A Merkle root is calculated for all eligible holders and published on-chain.',
-                icon: FileCheck,
-              },
-              {
-                step: '04',
-                title: 'Claim Rewards',
-                description: 'Connect your wallet, verify your proof, and claim your SOL share instantly.',
-                icon: Zap,
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                variants={fadeInUp}
-                className="flex gap-6 mb-8 last:mb-0"
-              >
-                {/* Timeline */}
-                <div className="flex flex-col items-center">
-                  <div className="w-12 h-12 rounded-full bg-accent-muted border border-accent/30 flex items-center justify-center text-accent font-mono font-semibold">
-                    {item.step}
-                  </div>
-                  {i < 3 && (
-                    <div className="w-px h-16 bg-gradient-to-b from-accent/30 to-transparent" />
-                  )}
-                </div>
+// ============================================
+// FEATURES SECTION
+// ============================================
+function FeaturesSection() {
+  const features = [
+    {
+      icon: Shield,
+      title: "Merkle-Verified Claims",
+      description: "Every reward allocation is cryptographically verifiable. Download proofs and validate independently.",
+    },
+    {
+      icon: Clock,
+      title: "Automated Epochs",
+      description: "48-hour distribution cycles. No manual intervention required. Fully autonomous operation.",
+    },
+    {
+      icon: Lock,
+      title: "Non-Custodial",
+      description: "Your rewards stay on-chain until you claim. No centralized custody, no counterparty risk.",
+    },
+    {
+      icon: BarChart3,
+      title: "Real-Time Analytics",
+      description: "Track distributions, holder statistics, and protocol health with comprehensive dashboards.",
+    },
+    {
+      icon: Zap,
+      title: "Gas Optimized",
+      description: "Batch processing and efficient smart contracts minimize transaction costs for all participants.",
+    },
+    {
+      icon: Users,
+      title: "Fair Distribution",
+      description: "Proportional rewards based on verified token holdings. Transparent allocation algorithms.",
+    },
+  ];
 
-                {/* Content */}
-                <div className="flex-1 pt-2 pb-8">
-                  <div className="flex items-center gap-3 mb-2">
-                    <item.icon className="w-5 h-5 text-accent" />
-                    <h3 className="text-h3">{item.title}</h3>
-                  </div>
-                  <p className="text-foreground-secondary">{item.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+  return (
+    <section className="section">
+      <div className="container-default">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <p className="text-caption text-accent-primary uppercase tracking-wider mb-4">
+            Core Features
+          </p>
+          <h2 className="text-display-md mb-4">
+            Enterprise-Grade Infrastructure
+          </h2>
+          <p className="text-body-lg text-text-secondary max-w-2xl mx-auto">
+            Built for reliability, transparency, and scale. Every component 
+            designed with institutional requirements in mind.
+          </p>
+        </motion.div>
 
-      {/* Trust Section */}
-      <section className="py-24 bg-background-secondary">
-        <div className="container-wide">
-          <motion.div
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={stagger}
-            className="grid lg:grid-cols-2 gap-16 items-center"
-          >
-            {/* Left content */}
-            <motion.div variants={stagger}>
-              <motion.p variants={fadeInUp} className="text-accent font-medium mb-3">
-                Security First
-              </motion.p>
-              <motion.h2 variants={fadeInUp} className="text-h1 mb-6">
-                Enterprise-grade security for your rewards
-              </motion.h2>
-              <motion.p variants={fadeInUp} className="text-foreground-secondary text-lg mb-8">
-                Built with the same security standards expected by institutional DeFi. 
-                Every component is designed for verifiability and auditability.
-              </motion.p>
-
-              <motion.div variants={stagger} className="space-y-4">
-                {[
-                  'Multisig treasury management',
-                  'Configurable slippage limits',
-                  'Circuit breaker for anomalies',
-                  'Audit-ready epoch proofs',
-                  'Permissioned keeper operations',
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    variants={fadeInUp}
-                    className="flex items-center gap-3"
-                  >
-                    <CheckCircle2 className="w-5 h-5 text-success" />
-                    <span className="text-foreground">{item}</span>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </motion.div>
-
-            {/* Right visual */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {features.map((feature, index) => (
             <motion.div
-              variants={fadeInUp}
-              className="relative"
+              key={feature.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              className="card-interactive group"
             >
-              <div className="card-glass p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-success-muted flex items-center justify-center">
-                    <Lock className="w-6 h-6 text-success" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Security Status</h4>
-                    <p className="text-sm text-success">All systems operational</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {[
-                    { label: 'Treasury Multisig', status: 'Active', color: 'success' },
-                    { label: 'Keeper Health', status: 'Healthy', color: 'success' },
-                    { label: 'Circuit Breaker', status: 'Armed', color: 'accent' },
-                    { label: 'Last Epoch', status: '2 hours ago', color: 'default' },
-                  ].map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between py-3 border-b border-border-subtle last:border-0"
-                    >
-                      <span className="text-foreground-secondary">{item.label}</span>
-                      <span className={`badge-${item.color}`}>{item.status}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="w-12 h-12 rounded-xl bg-accent-muted flex items-center justify-center mb-5 transition-colors group-hover:bg-accent-primary/20">
+                <feature.icon className="w-6 h-6 text-accent-primary" />
               </div>
-
-              {/* Decorative */}
-              <div className="absolute -top-4 -right-4 w-24 h-24 bg-accent/10 rounded-full blur-2xl" />
-              <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-success/10 rounded-full blur-2xl" />
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24">
-        <div className="container-narrow">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="relative card-glass text-center py-16 px-8"
-          >
-            {/* Background glow */}
-            <div className="absolute inset-0 rounded-card overflow-hidden">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
-            </div>
-
-            <div className="relative z-10">
-              <h2 className="text-h1 mb-4">Ready to claim your rewards?</h2>
-              <p className="text-foreground-secondary text-lg mb-8 max-w-xl mx-auto">
-                Connect your wallet and see your earnings across all epochs. 
-                Claim with a single transaction.
+              <h3 className="text-heading-md mb-3">{feature.title}</h3>
+              <p className="text-body-md text-text-secondary">
+                {feature.description}
               </p>
-              <Link href="/earnings" className="btn-primary btn-lg group">
-                Open Dashboard
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </div>
-          </motion.div>
+            </motion.div>
+          ))}
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-border">
-        <div className="container-wide">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="relative w-6 h-6">
-                <div className="absolute inset-0 bg-accent rounded-md opacity-20" />
-                <div className="absolute inset-0.5 bg-accent rounded-sm" />
-              </div>
-              <span className="font-semibold">Liquid</span>
-            </div>
+// ============================================
+// HOW IT WORKS SECTION
+// ============================================
+function HowItWorksSection() {
+  const steps = [
+    {
+      number: "01",
+      title: "LP Fees Accumulate",
+      description: "Trading activity generates fees that flow to the protocol treasury automatically.",
+    },
+    {
+      number: "02", 
+      title: "Epoch Processing",
+      description: "Every 48 hours, holdings are snapshotted and allocations calculated.",
+    },
+    {
+      number: "03",
+      title: "Merkle Root Published",
+      description: "Cryptographic proof of all allocations published on-chain for verification.",
+    },
+    {
+      number: "04",
+      title: "Claim Anytime",
+      description: "Submit your proof and claim rewards directly to your wallet.",
+    },
+  ];
 
-            <div className="flex items-center gap-6 text-sm text-foreground-muted">
-              <Link href="#" className="hover:text-foreground transition-colors">Documentation</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">GitHub</Link>
-              <Link href="#" className="hover:text-foreground transition-colors">Twitter</Link>
-            </div>
+  return (
+    <section id="how-it-works" className="section bg-section-gradient">
+      <div className="container-default">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <p className="text-caption text-accent-primary uppercase tracking-wider mb-4">
+            Process
+          </p>
+          <h2 className="text-display-md mb-4">
+            How It Works
+          </h2>
+          <p className="text-body-lg text-text-secondary max-w-2xl mx-auto">
+            A transparent, verifiable process from fee generation to reward distribution.
+          </p>
+        </motion.div>
 
-            <p className="text-sm text-foreground-muted">
-              © 2024 Liquid Protocol. All rights reserved.
-            </p>
+        <div className="relative">
+          {/* Connection line */}
+          <div className="hidden lg:block absolute top-20 left-0 right-0 h-px bg-gradient-to-r from-transparent via-accent-primary/30 to-transparent" />
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {steps.map((step, index) => (
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.5, delay: index * 0.15 }}
+                className="relative text-center lg:text-left"
+              >
+                {/* Step number */}
+                <div className="relative inline-flex items-center justify-center w-12 h-12 rounded-full bg-bg-tertiary border border-border-default mb-6">
+                  <span className="text-accent-primary font-mono font-semibold">
+                    {step.number}
+                  </span>
+                  {/* Glow */}
+                  <div className="absolute inset-0 rounded-full bg-accent-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+
+                <h3 className="text-heading-md mb-3">{step.title}</h3>
+                <p className="text-body-md text-text-secondary">
+                  {step.description}
+                </p>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </footer>
-    </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// TRUST SECTION
+// ============================================
+function TrustSection() {
+  const trustItems = [
+    {
+      icon: CheckCircle,
+      title: "Audited Smart Contracts",
+      description: "Independent security audits ensure protocol integrity and safety.",
+    },
+    {
+      icon: CheckCircle,
+      title: "Open Source",
+      description: "All code is publicly available for review and verification.",
+    },
+    {
+      icon: CheckCircle,
+      title: "Immutable Records",
+      description: "Every transaction and allocation recorded permanently on Solana.",
+    },
+  ];
+
+  return (
+    <section className="section">
+      <div className="container-default">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+          >
+            <p className="text-caption text-accent-primary uppercase tracking-wider mb-4">
+              Trust & Security
+            </p>
+            <h2 className="text-display-md mb-6">
+              Built for Institutional Confidence
+            </h2>
+            <p className="text-body-lg text-text-secondary mb-8">
+              We understand that trust is earned through transparency, security, 
+              and consistent performance. Our infrastructure is designed to meet 
+              the highest standards.
+            </p>
+
+            <div className="space-y-6">
+              {trustItems.map((item, index) => (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="flex items-start gap-4"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-accent-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <item.icon className="w-4 h-4 text-accent-primary" />
+                  </div>
+                  <div>
+                    <h4 className="text-heading-md mb-1">{item.title}</h4>
+                    <p className="text-body-md text-text-secondary">{item.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="card-accent p-8"
+          >
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent-primary/20 mb-6">
+                <Shield className="w-8 h-8 text-accent-primary" />
+              </div>
+              <h3 className="text-heading-lg mb-4">Security First</h3>
+              <p className="text-body-md text-text-secondary mb-8">
+                Our contracts have been audited by leading security firms. 
+                View full audit reports and verify contract addresses.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="#" className="btn-secondary">
+                  View Audit Reports
+                </a>
+                <a href="#" className="btn-ghost">
+                  Contract Addresses
+                </a>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// CTA SECTION
+// ============================================
+function CTASection() {
+  return (
+    <section className="section">
+      <div className="container-narrow">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="relative card gradient-border text-center py-16 px-8"
+        >
+          {/* Background glow */}
+          <div className="absolute inset-0 bg-gradient-radial from-accent-primary/5 via-transparent to-transparent rounded-2xl" />
+          
+          <div className="relative z-10">
+            <h2 className="text-display-md mb-4">
+              Ready to View Your <span className="text-gradient">Rewards</span>?
+            </h2>
+            <p className="text-body-lg text-text-secondary mb-8 max-w-lg mx-auto">
+              Connect your wallet or enter any address to check earnings, 
+              view epoch history, and claim your SOL.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/earnings" className="btn-primary btn-lg group">
+                Open Dashboard
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              </Link>
+              <Link href="/epochs" className="btn-secondary btn-lg">
+                View Epoch History
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================
+// FOOTER
+// ============================================
+function Footer() {
+  return (
+    <footer className="py-16 px-4 border-t border-border-default">
+      <div className="container-default">
+        <div className="grid md:grid-cols-4 gap-12 mb-12">
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-primary to-accent-secondary" />
+              <span className="font-display font-bold text-xl">EpochOS</span>
+            </div>
+            <p className="text-body-md text-text-secondary max-w-md mb-6">
+              Enterprise-grade token distribution infrastructure for the Solana ecosystem. 
+              Transparent, verifiable, and built for scale.
+            </p>
+            <div className="flex items-center gap-2 text-body-sm text-text-muted">
+              <span>Distributor:</span>
+              <code className="text-accent-primary font-mono">Distr...XXX</code>
+            </div>
+          </div>
+
+          {/* Links */}
+          <div>
+            <h4 className="text-heading-md mb-4">Product</h4>
+            <ul className="space-y-3">
+              <li><Link href="/earnings" className="nav-link">Dashboard</Link></li>
+              <li><Link href="/epochs" className="nav-link">Epochs</Link></li>
+              <li><a href="#" className="nav-link">Documentation</a></li>
+              <li><a href="#" className="nav-link">API</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-heading-md mb-4">Community</h4>
+            <ul className="space-y-3">
+              <li><a href="#" className="nav-link">Discord</a></li>
+              <li><a href="#" className="nav-link">Twitter</a></li>
+              <li><a href="#" className="nav-link">GitHub</a></li>
+              <li><a href="#" className="nav-link">Blog</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="pt-8 border-t border-border-subtle flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-body-sm text-text-muted">
+            © 2024 EpochOS. All rights reserved.
+          </p>
+          <div className="flex gap-6 text-body-sm text-text-muted">
+            <a href="#" className="hover:text-text-primary transition-colors">Terms</a>
+            <a href="#" className="hover:text-text-primary transition-colors">Privacy</a>
+            <a href="#" className="hover:text-text-primary transition-colors">Security</a>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }

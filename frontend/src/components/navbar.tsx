@@ -1,128 +1,140 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Menu, X, Sun, Moon } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X, ExternalLink } from 'lucide-react';
 import { WalletButton } from './wallet-button';
-import { cn } from '@/lib/utils';
 
-const navItems = [
+const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/earnings', label: 'Earnings' },
+  { href: '/earnings', label: 'Dashboard' },
   { href: '/epochs', label: 'Epochs' },
-  { href: '#', label: 'Docs' },
+  { href: '#', label: 'Docs', external: true },
 ];
 
 export function Navbar() {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
+      setIsScrolled(window.scrollY > 20);
     };
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <header
-      className={cn(
-        'sticky top-0 z-50 transition-all duration-300',
-        scrolled
-          ? 'bg-background/80 backdrop-blur-xl border-b border-border'
-          : 'bg-transparent'
-      )}
-    >
-      <nav className="container-wide">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="relative w-8 h-8">
-              <div className="absolute inset-0 bg-accent rounded-lg opacity-20 group-hover:opacity-30 transition-opacity" />
-              <div className="absolute inset-1 bg-accent rounded-md" />
-            </div>
-            <span className="font-semibold text-lg tracking-tight">Liquid</span>
-          </Link>
-
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'relative px-4 py-2 text-sm font-medium transition-colors rounded-lg',
-                  pathname === item.href
-                    ? 'text-foreground'
-                    : 'text-foreground-muted hover:text-foreground'
-                )}
+    <>
+      <motion.nav
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled 
+            ? 'bg-bg-primary/80 backdrop-blur-xl border-b border-border-subtle shadow-lg shadow-black/10' 
+            : 'bg-transparent'
+        }`}
+      >
+        <div className="container-default">
+          <div className="flex items-center justify-between h-16 md:h-20">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-3 group">
+              <motion.div 
+                className="w-9 h-9 rounded-xl bg-gradient-to-br from-accent-primary to-accent-secondary flex items-center justify-center"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                {item.label}
-                {pathname === item.href && (
-                  <motion.div
-                    layoutId="navbar-indicator"
-                    className="absolute inset-0 bg-background-hover rounded-lg -z-10"
-                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                  />
-                )}
-              </Link>
-            ))}
-          </div>
+                <span className="text-bg-primary font-bold text-sm">E</span>
+              </motion.div>
+              <span className="font-display font-bold text-lg hidden sm:block">
+                EpochOS
+              </span>
+            </Link>
 
-          {/* Right side */}
-          <div className="hidden md:flex items-center gap-3">
-            <WalletButton />
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-background-hover transition-colors"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </button>
-        </div>
-
-        {/* Mobile Nav */}
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden py-4 border-t border-border"
-          >
-            <div className="flex flex-col gap-1">
-              {navItems.map((item) => (
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
                 <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={cn(
-                    'px-4 py-3 text-sm font-medium rounded-lg transition-colors',
-                    pathname === item.href
-                      ? 'bg-background-hover text-foreground'
-                      : 'text-foreground-muted hover:text-foreground hover:bg-background-hover'
-                  )}
+                  key={link.href}
+                  href={link.href}
+                  className={`px-4 py-2 rounded-lg text-body-sm transition-colors ${
+                    pathname === link.href
+                      ? 'text-accent-primary bg-accent-muted'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                  }`}
                 >
-                  {item.label}
+                  <span className="flex items-center gap-1.5">
+                    {link.label}
+                    {link.external && <ExternalLink className="w-3 h-3" />}
+                  </span>
                 </Link>
               ))}
-              <div className="pt-4 px-4">
-                <WalletButton />
+            </div>
+
+            {/* Right side */}
+            <div className="flex items-center gap-3">
+              <WalletButton />
+              
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 rounded-lg hover:bg-bg-elevated transition-colors"
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-5 h-5" />
+                ) : (
+                  <Menu className="w-5 h-5" />
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.nav>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-x-0 top-16 z-40 md:hidden bg-bg-secondary/95 backdrop-blur-xl border-b border-border-default"
+          >
+            <div className="container-default py-4">
+              <div className="flex flex-col gap-1">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`px-4 py-3 rounded-lg text-body-md transition-colors ${
+                      pathname === link.href
+                        ? 'text-accent-primary bg-accent-muted'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-elevated'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      {link.label}
+                      {link.external && <ExternalLink className="w-4 h-4" />}
+                    </span>
+                  </Link>
+                ))}
               </div>
             </div>
           </motion.div>
         )}
-      </nav>
-    </header>
+      </AnimatePresence>
+
+      {/* Spacer */}
+      <div className="h-16 md:h-20" />
+    </>
   );
 }
+
+export default Navbar;

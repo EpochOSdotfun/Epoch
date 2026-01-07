@@ -1,26 +1,42 @@
 'use client';
 
-import { ReactNode, useMemo } from 'react';
+import { FC, ReactNode, useMemo } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Import wallet adapter styles
-import '@solana/wallet-adapter-react-ui/styles.css';
+require('@solana/wallet-adapter-react-ui/styles.css');
 
-const HELIUS_RPC = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000, // 30 seconds
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-export function Providers({ children }: { children: ReactNode }) {
+export const Providers: FC<{ children: ReactNode }> = ({ children }) => {
+  const endpoint = process.env.NEXT_PUBLIC_RPC_URL || 'https://api.mainnet-beta.solana.com';
+
   const wallets = useMemo(
-    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
+    () => [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+    ],
     []
   );
 
   return (
-    <ConnectionProvider endpoint={HELIUS_RPC}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>{children}</WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+    <QueryClientProvider client={queryClient}>
+      <ConnectionProvider endpoint={endpoint}>
+        <WalletProvider wallets={wallets} autoConnect>
+          <WalletModalProvider>{children}</WalletModalProvider>
+        </WalletProvider>
+      </ConnectionProvider>
+    </QueryClientProvider>
   );
-}
+};
+
+

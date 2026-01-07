@@ -1,34 +1,66 @@
-import { type ClassValue, clsx } from 'clsx';
+import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatSol(value: string | number): string {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  return num.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  });
+/**
+ * Format lamports to SOL with appropriate precision
+ */
+export function formatSol(lamports: string | number | bigint): string {
+  const sol = Number(lamports) / 1e9;
+  if (sol === 0) return '0';
+  if (sol < 0.001) return '<0.001';
+  if (sol < 1) return sol.toFixed(4);
+  if (sol < 100) return sol.toFixed(3);
+  if (sol < 10000) return sol.toFixed(2);
+  return formatNumber(sol.toFixed(0));
 }
 
+/**
+ * Format a number with commas
+ */
+export function formatNumber(value: string | number): string {
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return '0';
+  return num.toLocaleString('en-US');
+}
+
+/**
+ * Format as currency (USD)
+ */
+export function formatCurrency(value: number): string {
+  if (value === 0) return '$0';
+  if (value < 0.01) return '<$0.01';
+  
+  if (value >= 1e9) {
+    return `$${(value / 1e9).toFixed(2)}B`;
+  }
+  if (value >= 1e6) {
+    return `$${(value / 1e6).toFixed(2)}M`;
+  }
+  if (value >= 1e3) {
+    return `$${(value / 1e3).toFixed(2)}K`;
+  }
+  
+  return `$${value.toFixed(2)}`;
+}
+
+/**
+ * Shorten a Solana address for display
+ */
 export function shortenAddress(address: string, chars = 4): string {
+  if (!address) return '';
   return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 }
 
-export function formatDate(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-export function formatDateTime(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', {
+/**
+ * Format a date string
+ */
+export function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -37,58 +69,65 @@ export function formatDateTime(date: string | Date): string {
   });
 }
 
-export function formatRelativeTime(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+/**
+ * Format relative time (e.g., "2 hours ago")
+ */
+export function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
   const now = new Date();
-  const diff = now.getTime() - d.getTime();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
   
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  
-  return formatDate(d);
+  return formatDate(dateString);
 }
 
-export function formatNumber(value: string | number): string {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(num)) return '0';
-  
-  if (num >= 1e9) {
-    return (num / 1e9).toFixed(2) + 'B';
-  }
-  if (num >= 1e6) {
-    return (num / 1e6).toFixed(2) + 'M';
-  }
-  if (num >= 1e3) {
-    return (num / 1e3).toFixed(2) + 'K';
-  }
-  
-  return num.toLocaleString('en-US', {
-    maximumFractionDigits: 2,
-  });
+/**
+ * Calculate percentage
+ */
+export function calculatePercentage(part: string | number, total: string | number): number {
+  const p = typeof part === 'string' ? parseFloat(part) : part;
+  const t = typeof total === 'string' ? parseFloat(total) : total;
+  if (t === 0) return 0;
+  return (p / t) * 100;
 }
 
-export function formatCurrency(value: string | number): string {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
-  if (isNaN(num)) return '$0';
-  
-  if (num >= 1e9) {
-    return '$' + (num / 1e9).toFixed(2) + 'B';
-  }
-  if (num >= 1e6) {
-    return '$' + (num / 1e6).toFixed(2) + 'M';
-  }
-  if (num >= 1e3) {
-    return '$' + (num / 1e3).toFixed(2) + 'K';
-  }
-  
-  return '$' + num.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+/**
+ * Sleep utility
+ */
+export function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+/**
+ * Retry a function with exponential backoff
+ */
+export async function retry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  baseDelayMs = 1000
+): Promise<T> {
+  let lastError: Error | undefined;
+  
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxAttempts - 1) {
+        await sleep(baseDelayMs * Math.pow(2, attempt));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+
