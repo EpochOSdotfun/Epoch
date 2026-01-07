@@ -53,3 +53,42 @@ export function formatRelativeTime(date: string | Date): string {
   
   return formatDate(d);
 }
+
+export function formatNumber(value: string | number): string {
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return '0';
+  
+  if (num >= 1e9) {
+    return (num / 1e9).toFixed(2) + 'B';
+  }
+  if (num >= 1e6) {
+    return (num / 1e6).toFixed(2) + 'M';
+  }
+  if (num >= 1e3) {
+    return (num / 1e3).toFixed(2) + 'K';
+  }
+  
+  return num.toLocaleString('en-US', {
+    maximumFractionDigits: 2,
+  });
+}
+
+export function formatCurrency(value: string | number): string {
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return '$0';
+  
+  if (num >= 1e9) {
+    return '$' + (num / 1e9).toFixed(2) + 'B';
+  }
+  if (num >= 1e6) {
+    return '$' + (num / 1e6).toFixed(2) + 'M';
+  }
+  if (num >= 1e3) {
+    return '$' + (num / 1e3).toFixed(2) + 'K';
+  }
+  
+  return '$' + num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
