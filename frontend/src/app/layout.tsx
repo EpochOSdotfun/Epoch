@@ -1,40 +1,55 @@
-import type { Metadata } from 'next';
-import { Space_Mono, Instrument_Sans } from 'next/font/google';
-import { Providers } from '@/components/providers';
-import { Nav } from '@/components/nav';
 import './globals.css';
-
-const instrumentSans = Instrument_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans',
-});
-
-const spaceMono = Space_Mono({
-  weight: ['400', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-mono',
-});
+import type { Metadata } from 'next';
+import { Providers } from '@/components/providers';
+import { Navbar } from '@/components/navbar';
 
 export const metadata: Metadata = {
-  title: 'Epoch OS | Solana LP Fee Distribution',
-  description: 'Automated rewards for token holders. The flywheel collects LP fees, executes buybacks, burns tokens, and distributes SOL—all on-chain, every epoch.',
+  title: 'Epoch | SOL Rewards Distribution',
+  description: 'Automated SOL rewards from LP fees. Transparent, verifiable, on-chain.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" className={`${instrumentSans.variable} ${spaceMono.variable}`}>
-      <body className="font-sans">
+    <html lang="en">
+      <body className="bg-bg-primary text-text-primary min-h-screen">
         <Providers>
-          <Nav />
-          <main>{children}</main>
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-border-default mt-auto">
+      <div className="container-main py-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded bg-accent-primary" />
+            <span className="text-caption font-medium">Epoch</span>
+          </div>
+          <div className="flex items-center gap-6 text-caption text-text-muted">
+            <a href="https://docs.epoch.fund" className="link-muted">Docs</a>
+            <a href="https://github.com/EpochOSdotfun" className="link-muted">GitHub</a>
+            <a href="https://twitter.com/epochdotfun" className="link-muted">Twitter</a>
+          </div>
+          <div className="text-micro text-text-muted">
+            Program: <code className="mono">Distr...XXX</code>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }

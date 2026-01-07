@@ -1,269 +1,241 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, Hash, Users, Coins, ExternalLink, Download, CheckCircle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Download, Copy, Check, HelpCircle } from 'lucide-react';
+import { useState } from 'react';
 import { useEpoch } from '@/hooks/useEpoch';
-import { formatSol, formatNumber } from '@/lib/utils';
+import { formatSol, formatNumber, formatDate, cn } from '@/lib/utils';
+import { Tooltip, tooltipContent } from '@/components/tooltip';
 
 export default function EpochPage() {
   const params = useParams();
   const epochId = params.id as string;
   const { data: epoch, isLoading, error } = useEpoch(parseInt(epochId));
-  const revealRefs = useRef<(HTMLElement | null)[]>([]);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!epoch) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-
-    revealRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, [epoch]);
-
-  const addRevealRef = (index: number) => (el: HTMLElement | null) => {
-    revealRefs.current[index] = el;
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen">
+        <div className="container-main py-8">
+          <div className="skeleton h-8 w-24 mb-6" />
+          <div className="skeleton h-10 w-48 mb-8" />
+          <div className="grid md:grid-cols-4 gap-4 mb-8">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="skeleton h-24 w-full" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !epoch) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border border-[var(--border-dim)] flex items-center justify-center mx-auto mb-6">
-            <Calendar className="w-6 h-6 text-[var(--text-muted)]" />
-          </div>
-          <h3 className="text-lg font-light mb-2">Epoch not found</h3>
-          <p className="text-[var(--text-muted)] text-sm mb-6">Epoch #{epochId} does not exist</p>
-          <Link href="/epochs" className="btn-secondary">
+      <div className="min-h-screen">
+        <div className="container-main py-8">
+          <Link href="/epochs" className="btn-ghost btn-sm mb-6">
             <ArrowLeft className="w-4 h-4" />
             Back to Epochs
           </Link>
+          <div className="card text-center py-12 max-w-md mx-auto">
+            <h2 className="text-body font-semibold mb-2">Epoch not found</h2>
+            <p className="text-caption text-text-muted">
+              Epoch #{epochId} does not exist or hasn't been published yet.
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
+  const claimPercent = epoch.claimProgress || 0;
+
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <section className="container-editorial section-gap pb-12">
-        <Link
-          href="/epochs"
-          className="inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors mb-8"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Epochs
-        </Link>
-
-        <div
-          ref={addRevealRef(0)}
-          className="reveal"
-          style={{ animationDelay: '0ms' }}
-        >
-          <p className="label mb-4">Distribution Epoch</p>
-          <h1 className="text-4xl md:text-5xl font-light tracking-tight mb-4">
-            Epoch <span className="text-accent">#{epoch.epochId}</span>
-          </h1>
-          <p className="text-[var(--text-secondary)]">
-            Published on{' '}
-            {new Date(epoch.publishedAt).toLocaleString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </p>
-        </div>
-      </section>
-
-      <div className="divider container-editorial" />
-
-      {/* Stats */}
-      <section className="container-editorial section-gap">
-        <div
-          ref={addRevealRef(1)}
-          className="reveal grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
-          style={{ animationDelay: '40ms' }}
-        >
-          <StatCard
-            icon={<Coins className="w-4 h-4" />}
-            label="Total Rewards"
-            value={`${formatSol(epoch.rewardsSol)} SOL`}
-          />
-          <StatCard
-            icon={<CheckCircle className="w-4 h-4" />}
-            label="Claimed"
-            value={`${epoch.claimProgress}%`}
-            highlight
-          />
-          <StatCard
-            icon={<Users className="w-4 h-4" />}
-            label="Claimants"
-            value={`${formatNumber(epoch.numClaimants)} / ${formatNumber(epoch.totalAllocations)}`}
-          />
-          <StatCard
-            icon={<Hash className="w-4 h-4" />}
-            label="Slot Range"
-            value={`${formatNumber(epoch.startSlot)}–${formatNumber(epoch.endSlot)}`}
-            mono
-          />
-        </div>
-
-        {/* Verification */}
-        <div
-          ref={addRevealRef(2)}
-          className="reveal mb-16"
-          style={{ animationDelay: '80ms' }}
-        >
-          <h2 className="text-xl font-light mb-6">Verification</h2>
-          <div className="card-transparent">
-            <div className="space-y-0">
-              <VerificationRow
-                label="Merkle Root"
-                value={epoch.merkleRoot}
-                mono
-              />
-              {epoch.csvHash && (
-                <VerificationRow
-                  label="CSV Hash (SHA-256)"
-                  value={epoch.csvHash}
-                  mono
-                />
-              )}
+      <section className="border-b border-border-default">
+        <div className="container-main py-8">
+          <Link href="/epochs" className="btn-ghost btn-sm mb-4 -ml-3">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Epochs
+          </Link>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-heading font-semibold text-text-primary mb-1">
+                Epoch #{epoch.epochId}
+              </h1>
+              <p className="text-caption text-text-muted">
+                Published {formatDate(epoch.publishedAt)}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <a
+                href={`/api/epochs/${epoch.epochId}/csv`}
+                className="btn-secondary btn-sm"
+                download
+              >
+                <Download className="w-4 h-4" />
+                Download CSV
+              </a>
               {epoch.publishSig && (
-                <VerificationRow
-                  label="Publish Transaction"
-                  value={`${epoch.publishSig.slice(0, 24)}...`}
+                <a
                   href={`https://solscan.io/tx/${epoch.publishSig}`}
-                  mono
-                />
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-ghost btn-sm"
+                >
+                  View on Solscan
+                  <ExternalLink className="w-4 h-4" />
+                </a>
               )}
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Actions */}
-        <div
-          ref={addRevealRef(3)}
-          className="reveal flex flex-wrap gap-4"
-          style={{ animationDelay: '120ms' }}
-        >
-          <a
-            href={`/api/epochs/${epoch.epochId}/csv`}
-            className="btn-primary"
-            download
-          >
-            <Download className="w-4 h-4" />
-            Download CSV
-          </a>
-          {epoch.publishSig && (
-            <a
-              href={`https://solscan.io/tx/${epoch.publishSig}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary"
-            >
-              View on Explorer
-              <ExternalLink className="w-4 h-4" />
-            </a>
-          )}
+      {/* Stats */}
+      <section className="container-main py-8">
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
+          <div className="kpi-card">
+            <div className="kpi-value">{formatSol(epoch.rewardsSol)}</div>
+            <div className="kpi-label">Total Rewards (SOL)</div>
+          </div>
+          <div className="kpi-card">
+            <div className="flex items-baseline gap-2">
+              <span className={cn(
+                'kpi-value',
+                claimPercent >= 100 ? 'text-accent-success' : ''
+              )}>
+                {claimPercent.toFixed(1)}%
+              </span>
+            </div>
+            <div className="kpi-label">Claimed</div>
+            <div className="mt-2 w-full h-1.5 bg-bg-tertiary rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  'h-full rounded-full transition-all',
+                  claimPercent >= 100 ? 'bg-accent-success' : 'bg-accent-primary'
+                )}
+                style={{ width: `${Math.min(claimPercent, 100)}%` }}
+              />
+            </div>
+          </div>
+          <div className="kpi-card">
+            <div className="kpi-value">
+              {formatNumber(epoch.numClaimants)}
+              <span className="text-body text-text-muted font-normal">
+                {' '}/ {formatNumber(epoch.totalAllocations)}
+              </span>
+            </div>
+            <div className="kpi-label">Claimants</div>
+          </div>
+          <div className="kpi-card">
+            <div className="text-body font-medium mono">
+              {formatNumber(epoch.startSlot)}
+            </div>
+            <div className="text-body font-medium mono text-text-muted">
+              → {formatNumber(epoch.endSlot)}
+            </div>
+            <div className="kpi-label mt-2">
+              <Tooltip content={tooltipContent.epochSlot}>
+                <span className="inline-flex items-center gap-1 cursor-help">
+                  Slot Range
+                  <HelpCircle className="w-3 h-3" />
+                </span>
+              </Tooltip>
+            </div>
+          </div>
+        </div>
+
+        {/* Verification */}
+        <div className="card">
+          <h2 className="text-body font-semibold mb-4">Verification Data</h2>
+          
+          <div className="space-y-4">
+            {/* Merkle Root */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 py-3 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <span className="text-text-muted text-caption">Merkle Root</span>
+                <Tooltip content={tooltipContent.merkleRoot}>
+                  <HelpCircle className="w-3 h-3 text-text-muted cursor-help" />
+                </Tooltip>
+              </div>
+              <div className="flex items-center gap-2">
+                <code className="mono text-caption bg-bg-secondary px-2 py-1 rounded break-all">
+                  {epoch.merkleRoot}
+                </code>
+                <button
+                  onClick={() => copyToClipboard(epoch.merkleRoot, 'merkle')}
+                  className="btn-ghost p-1.5 shrink-0"
+                >
+                  {copiedField === 'merkle' ? (
+                    <Check className="w-3.5 h-3.5 text-accent-success" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* CSV Hash */}
+            {epoch.csvHash && (
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 py-3 border-b border-border-default">
+                <span className="text-text-muted text-caption">CSV Hash (SHA-256)</span>
+                <div className="flex items-center gap-2">
+                  <code className="mono text-caption bg-bg-secondary px-2 py-1 rounded break-all">
+                    {epoch.csvHash}
+                  </code>
+                  <button
+                    onClick={() => copyToClipboard(epoch.csvHash!, 'csv')}
+                    className="btn-ghost p-1.5 shrink-0"
+                  >
+                    {copiedField === 'csv' ? (
+                      <Check className="w-3.5 h-3.5 text-accent-success" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Publish Signature */}
+            {epoch.publishSig && (
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 py-3">
+                <span className="text-text-muted text-caption">Publish Transaction</span>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`https://solscan.io/tx/${epoch.publishSig}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mono text-caption link inline-flex items-center gap-1"
+                  >
+                    {epoch.publishSig.slice(0, 24)}...
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={() => copyToClipboard(epoch.publishSig!, 'sig')}
+                    className="btn-ghost p-1.5 shrink-0"
+                  >
+                    {copiedField === 'sig' ? (
+                      <Check className="w-3.5 h-3.5 text-accent-success" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </section>
-    </div>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-  highlight,
-  mono,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  highlight?: boolean;
-  mono?: boolean;
-}) {
-  return (
-    <div className="card-transparent">
-      <div className="flex items-center gap-2 mb-4">
-        <span className={highlight ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'}>
-          {icon}
-        </span>
-        <span className="label mb-0">{label}</span>
-      </div>
-      <p
-        className={`text-2xl font-light ${highlight ? 'text-[var(--accent)]' : ''} ${
-          mono ? 'mono text-lg' : ''
-        }`}
-      >
-        {value}
-      </p>
-    </div>
-  );
-}
-
-function VerificationRow({
-  label,
-  value,
-  href,
-  mono,
-}: {
-  label: string;
-  value: string;
-  href?: string;
-  mono?: boolean;
-}) {
-  return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between py-4 border-b border-[var(--border-dim)] last:border-b-0">
-      <span className="text-[var(--text-muted)] text-sm mb-2 md:mb-0">{label}</span>
-      {href ? (
-        <a
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`inline-flex items-center gap-2 text-[var(--accent)] hover:underline underline-offset-4 ${
-            mono ? 'mono text-sm' : ''
-          }`}
-        >
-          {value}
-          <ExternalLink className="w-3 h-3" />
-        </a>
-      ) : (
-        <code
-          className={`text-sm bg-[var(--bg-primary)] px-3 py-1 text-[var(--text-secondary)] break-all ${
-            mono ? 'mono' : ''
-          }`}
-        >
-          {value}
-        </code>
-      )}
     </div>
   );
 }
