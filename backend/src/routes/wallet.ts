@@ -274,3 +274,4 @@ export async function walletRoutes(app: FastifyInstance) {
   });
 }
 
+

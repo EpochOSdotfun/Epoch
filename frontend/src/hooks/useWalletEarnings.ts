@@ -48,3 +48,4 @@ export function useWalletEarnings(wallet: string) {
   });
 }
 
+

@@ -25,3 +25,4 @@ pub fn update_admin_handler(ctx: Context<UpdateAdmin>, new_admin: Pubkey) -> Res
     Ok(())
 }
 
+
