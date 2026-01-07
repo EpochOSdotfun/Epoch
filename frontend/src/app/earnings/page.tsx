@@ -149,7 +149,7 @@ export default function EarningsPage() {
                 </div>
 
                 {/* Claim Section */}
-                {BigInt(earnings.unclaimedSol) > 0n && (
+                {BigInt(earnings.unclaimedSol) > BigInt(0) && (
                   <div className="card mb-8 bg-gradient-to-r from-accent-primary/5 to-accent-secondary/5 border-accent-primary/20">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                       <div>
