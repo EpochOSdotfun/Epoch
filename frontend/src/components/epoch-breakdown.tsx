@@ -2,15 +2,17 @@
 
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { formatSol } from '@/lib/utils';
+import { formatSol, formatDate, cn } from '@/lib/utils';
+
+interface EpochBreakdownItem {
+  epochId: number;
+  amount: string;
+  claimed: boolean;
+  date: string;
+}
 
 interface EpochBreakdownProps {
-  epochs: Array<{
-    epochId: number;
-    amount: string;
-    claimed: boolean;
-    date: string;
-  }>;
+  epochs: EpochBreakdownItem[];
 }
 
 export function EpochBreakdown({ epochs }: EpochBreakdownProps) {
@@ -23,36 +25,39 @@ export function EpochBreakdown({ epochs }: EpochBreakdownProps) {
   }
 
   return (
-    <div className="divide-y divide-surface-100">
+    <div className="space-y-2">
       {epochs.map((epoch) => (
         <div
           key={epoch.epochId}
-          className="flex items-center justify-between py-3 px-1 hover:bg-surface-50 -mx-1 transition-colors"
+          className={cn(
+            'flex items-center justify-between p-4 rounded-lg border transition-colors duration-180',
+            epoch.claimed 
+              ? 'border-surface-100 bg-bg-tertiary/50' 
+              : 'border-accent/20 bg-accent-subtle'
+          )}
         >
           <div className="flex items-center gap-4">
-            <span className="text-body-sm font-medium text-ink-900 w-16">
+            <span className="font-mono text-body-sm font-medium text-ink-900">
               #{epoch.epochId}
             </span>
-            <span className="mono-value">
+            <span className="text-body-sm text-ink-700">
               {formatSol(epoch.amount)} SOL
             </span>
+            <span className={cn(
+              'badge',
+              epoch.claimed ? 'badge-positive' : 'badge-warning'
+            )}>
+              {epoch.claimed ? 'Claimed' : 'Pending'}
+            </span>
           </div>
-
+          
           <div className="flex items-center gap-4">
-            {epoch.claimed ? (
-              <span className="badge-positive">Claimed</span>
-            ) : (
-              <span className="badge-warning">Pending</span>
-            )}
-            <span className="text-caption text-ink-500 w-20 text-right">
-              {new Date(epoch.date).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              })}
+            <span className="text-caption text-ink-500 hidden sm:block">
+              {formatDate(epoch.date)}
             </span>
             <Link
               href={`/epoch/${epoch.epochId}`}
-              className="text-ink-300 hover:text-ink-700 transition-colors"
+              className="btn-ghost btn-sm p-1"
             >
               <ChevronRight className="w-4 h-4" />
             </Link>

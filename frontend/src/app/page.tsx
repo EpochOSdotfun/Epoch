@@ -1,233 +1,279 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, BarChart3, Shield, Zap, Clock, ChevronRight, ExternalLink } from 'lucide-react';
+import { ArrowRight, Check, ExternalLink, Shield, FileCheck, Lock, Eye } from 'lucide-react';
+import { useMetrics } from '@/hooks/useMetrics';
+import { DashboardPreview } from '@/components/dashboard-preview';
+import { LiveMetrics } from '@/components/live-metrics';
+import { cn } from '@/lib/utils';
 
-export default function LandingPage() {
+export default function Home() {
+  const { data: metrics, isLoading } = useMetrics();
+
   return (
     <div className="page-fade">
-      {/* Navigation */}
-      <header className="border-b border-surface-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container-wide h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-ink-900 rounded flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">E</span>
-            </div>
-            <span className="font-semibold text-ink-900">Epoch</span>
-          </Link>
-          
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="/epochs" className="text-body-sm text-ink-700 hover:text-ink-900 transition-colors">
-              Epochs
-            </Link>
-            <Link href="/earnings" className="text-body-sm text-ink-700 hover:text-ink-900 transition-colors">
-              Earnings
-            </Link>
-            <a href="https://docs.epoch.finance" className="text-body-sm text-ink-700 hover:text-ink-900 transition-colors flex items-center gap-1">
-              Docs
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </nav>
-
-          <Link href="/earnings" className="btn-primary btn-sm">
-            Launch App
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="container-default py-24 md:py-32">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-100 rounded-full mb-6">
-            <span className="status-active" />
-            <span className="text-caption text-ink-700">Live on Mainnet</span>
-          </div>
-          
-          <h1 className="text-display text-ink-900 mb-6 text-balance">
-            Automated token rewards distribution
-          </h1>
-          
-          <p className="text-body text-ink-500 mb-10 max-w-lg leading-relaxed">
-            Epoch automates buyback, burn, and LP fee distribution for Solana tokens. 
-            Verifiable on-chain, transparent by design.
-          </p>
-
-          <div className="flex flex-wrap gap-4">
-            <Link href="/earnings" className="btn-primary btn-lg">
-              View Earnings
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link href="/epochs" className="btn-secondary btn-lg">
-              Browse Epochs
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Bar */}
-      <section className="border-y border-surface-200 bg-surface-50">
-        <div className="container-wide py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div>
-              <p className="kpi-label">Total Distributed</p>
-              <p className="kpi-value">1,247.82 SOL</p>
-            </div>
-            <div>
-              <p className="kpi-label">Epochs Completed</p>
-              <p className="kpi-value">156</p>
-            </div>
-            <div>
-              <p className="kpi-label">Unique Holders</p>
-              <p className="kpi-value">4,892</p>
-            </div>
-            <div>
-              <p className="kpi-label">Avg Epoch Yield</p>
-              <p className="kpi-value">8.01 SOL</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="container-default py-24">
-        <div className="mb-16">
-          <h2 className="text-title-lg text-ink-900 mb-3">How it works</h2>
-          <p className="text-body text-ink-500 max-w-lg">
-            The flywheel collects LP fees and routes them through automated processes each epoch.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="card-padded">
-            <div className="w-10 h-10 rounded-md bg-surface-100 flex items-center justify-center mb-4">
-              <Clock className="w-5 h-5 text-ink-700" />
-            </div>
-            <h3 className="text-title-sm text-ink-900 mb-2">Fee Collection</h3>
-            <p className="text-body-sm text-ink-500 leading-relaxed">
-              LP fees are claimed from the Raydium pool and routed to the treasury every epoch.
-            </p>
-          </div>
-
-          <div className="card-padded">
-            <div className="w-10 h-10 rounded-md bg-surface-100 flex items-center justify-center mb-4">
-              <Zap className="w-5 h-5 text-ink-700" />
-            </div>
-            <h3 className="text-title-sm text-ink-900 mb-2">Automated Routing</h3>
-            <p className="text-body-sm text-ink-500 leading-relaxed">
-              Funds are split: rewards to holders, buyback & burn, and auto-LP reinvestment.
-            </p>
-          </div>
-
-          <div className="card-padded">
-            <div className="w-10 h-10 rounded-md bg-surface-100 flex items-center justify-center mb-4">
-              <Shield className="w-5 h-5 text-ink-700" />
-            </div>
-            <h3 className="text-title-sm text-ink-900 mb-2">Merkle Claims</h3>
-            <p className="text-body-sm text-ink-500 leading-relaxed">
-              Holder snapshots generate merkle trees. Claims are gas-efficient and verifiable.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Recent Epochs */}
-      <section className="border-t border-surface-200 bg-surface-50 py-24">
+      {/* ========================================
+          HERO - Left-aligned, with dashboard preview
+          ======================================== */}
+      <section className="section-gap-lg border-b border-surface-100">
         <div className="container-default">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-title-lg text-ink-900 mb-1">Recent Epochs</h2>
-              <p className="text-body-sm text-ink-500">Latest completed distribution cycles</p>
-            </div>
-            <Link href="/epochs" className="btn-ghost btn-sm">
-              View all
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            {/* Left: Content */}
+            <div className="lg:col-span-5 space-y-6">
+              {/* Status Badge */}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-surface-200 bg-bg-secondary">
+                <span className="status-dot-live" />
+                <span className="text-caption text-ink-500">Live on Solana Mainnet</span>
+              </div>
 
-          <div className="card overflow-hidden">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Epoch</th>
-                  <th>Distributed</th>
-                  <th>Holders</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { id: 156, amount: '8.24', holders: 342, status: 'completed' },
-                  { id: 155, amount: '7.89', holders: 339, status: 'completed' },
-                  { id: 154, amount: '9.12', holders: 335, status: 'completed' },
-                  { id: 153, amount: '6.45', holders: 331, status: 'completed' },
-                  { id: 152, amount: '8.91', holders: 328, status: 'completed' },
-                ].map((epoch) => (
-                  <tr key={epoch.id}>
-                    <td className="font-medium text-ink-900">#{epoch.id}</td>
-                    <td className="mono-value">{epoch.amount} SOL</td>
-                    <td className="mono-value">{epoch.holders}</td>
-                    <td>
-                      <span className="badge-positive">Completed</span>
-                    </td>
-                    <td className="text-right">
-                      <Link href={`/epoch/${epoch.id}`} className="btn-ghost btn-sm">
-                        View
-                        <ChevronRight className="w-3 h-3" />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              {/* Headline */}
+              <h1 className="text-h1 text-ink-900">
+                Earn SOL from{' '}
+                <span className="text-accent">LP fees</span>.
+                <br />
+                Automatically.
+              </h1>
+
+              {/* Subhead */}
+              <p className="text-body text-ink-500 max-w-md">
+                Hold tokens. Accumulate rewards each epoch. Claim when you want. 
+                No staking. No lockups. Just transparent, verifiable earnings.
+              </p>
+
+              {/* CTAs */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Link href="/earnings" className="btn-primary">
+                  Check Earnings
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link href="/docs" className="btn-secondary">
+                  Read Docs
+                </Link>
+              </div>
+
+              {/* Trust Signals */}
+              <div className="flex items-center gap-6 pt-4 text-caption text-ink-300">
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-positive" />
+                  Open source
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-positive" />
+                  Merkle verified
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-positive" />
+                  Non-custodial
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Dashboard Preview */}
+            <div className="lg:col-span-7 lg:pl-8">
+              <DashboardPreview metrics={metrics} />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="container-default py-24">
-        <div className="card-padded text-center max-w-xl mx-auto">
-          <BarChart3 className="w-10 h-10 text-ink-300 mx-auto mb-6" />
-          <h2 className="text-title-lg text-ink-900 mb-3">Check your earnings</h2>
-          <p className="text-body text-ink-500 mb-8">
-            Enter your wallet address to view pending rewards and claim history.
+      {/* ========================================
+          HOW IT WORKS - 2-column: timeline left, metrics right
+          ======================================== */}
+      <section className="section-gap bg-bg-secondary/30" id="how-it-works">
+        <div className="container-default">
+          {/* Section Header */}
+          <div className="mb-12 max-w-xl">
+            <h2 className="text-h2 text-ink-900 mb-3">How It Works</h2>
+            <p className="text-body text-ink-500">
+              A straightforward process that runs automatically. Your only action is claiming.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
+            {/* Left: Timeline */}
+            <div className="lg:col-span-6">
+              <div className="timeline">
+                <TimelineStep
+                  number="01"
+                  title="LP Fees Accumulate"
+                  description="Trading activity on the LP generates fees. These flow to the protocol treasury automatically."
+                />
+                <TimelineStep
+                  number="02"
+                  title="Converted to SOL"
+                  description="The keeper bot safely swaps accumulated tokens to SOL with slippage protection and circuit breakers."
+                />
+                <TimelineStep
+                  number="03"
+                  title="Epoch Published"
+                  description="Each epoch, holdings are snapshotted and rewards calculated. Merkle root published on-chain."
+                />
+                <TimelineStep
+                  number="04"
+                  title="Claim Your SOL"
+                  description="Provide your proof, verify on-chain, and claim directly to your wallet. No intermediaries."
+                  isLast
+                />
+              </div>
+            </div>
+
+            {/* Right: Live Metrics */}
+            <div className="lg:col-span-6">
+              <div className="sticky top-24">
+                <h3 className="text-title-sm text-ink-900 mb-5">Live Protocol Stats</h3>
+                <LiveMetrics metrics={metrics} isLoading={isLoading} />
+
+                {/* Additional Context */}
+                <div className="mt-6 p-4 rounded-lg border border-surface-100 bg-bg-secondary">
+                  <p className="text-body-sm text-ink-500">
+                    <span className="text-ink-700 font-medium">Distribution:</span>{' '}
+                    25% rewards · 25% buyback · 25% burn · 25% auto-LP
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================
+          SECURITY & TRANSPARENCY - Audit Checklist Style
+          ======================================== */}
+      <section className="section-gap border-t border-surface-100">
+        <div className="container-default">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            {/* Left: Header */}
+            <div className="lg:col-span-4">
+              <h2 className="text-h2 text-ink-900 mb-3">Security & Transparency</h2>
+              <p className="text-body text-ink-500">
+                Every claim is verifiable. Every epoch is auditable. No trust required.
+              </p>
+              <div className="mt-6">
+                <a
+                  href="https://github.com/epoch-protocol"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary"
+                >
+                  View Source
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Right: Checklist */}
+            <div className="lg:col-span-7 lg:col-start-6">
+              <div className="card">
+                <div className="divide-y divide-surface-50">
+                  <ChecklistItem
+                    icon={Shield}
+                    title="Merkle Proof Verification"
+                    description="Every allocation is cryptographically provable. Independent verification available."
+                    status="verified"
+                  />
+                  <ChecklistItem
+                    icon={FileCheck}
+                    title="Public Epoch Data"
+                    description="All epoch snapshots, allocations, and Merkle roots are published and downloadable."
+                    status="verified"
+                  />
+                  <ChecklistItem
+                    icon={Lock}
+                    title="Non-Custodial Claims"
+                    description="Rewards go directly from program to wallet. No intermediary holds funds."
+                    status="verified"
+                  />
+                  <ChecklistItem
+                    icon={Eye}
+                    title="Open Source Contracts"
+                    description="Distributor and Controller programs are fully auditable on GitHub."
+                    status="verified"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ========================================
+          CTA - Simple, confident
+          ======================================== */}
+      <section className="section-gap bg-bg-secondary/30 border-t border-surface-100">
+        <div className="container-narrow text-center">
+          <h2 className="text-h2 text-ink-900 mb-4">
+            Check your rewards
+          </h2>
+          <p className="text-body text-ink-500 mb-8 max-w-md mx-auto">
+            Enter any wallet address to view earnings history and claimable SOL.
           </p>
           <Link href="/earnings" className="btn-primary btn-lg">
-            Open Dashboard
+            View Earnings Dashboard
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
+    </div>
+  );
+}
 
-      {/* Footer */}
-      <footer className="border-t border-surface-200 py-12">
-        <div className="container-wide">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-ink-900 rounded flex items-center justify-center">
-                <span className="text-white font-semibold text-xs">E</span>
-              </div>
-              <span className="text-body-sm text-ink-500">© 2026 Epoch Protocol</span>
-            </div>
-            
-            <div className="flex items-center gap-6">
-              <a href="https://twitter.com/epochprotocol" className="text-body-sm text-ink-500 hover:text-ink-900 transition-colors">
-                Twitter
-              </a>
-              <a href="https://discord.gg/epoch" className="text-body-sm text-ink-500 hover:text-ink-900 transition-colors">
-                Discord
-              </a>
-              <a href="https://github.com/epoch-protocol" className="text-body-sm text-ink-500 hover:text-ink-900 transition-colors">
-                GitHub
-              </a>
-              <a href="https://docs.epoch.finance" className="text-body-sm text-ink-500 hover:text-ink-900 transition-colors">
-                Docs
-              </a>
-            </div>
-          </div>
+// Timeline Step Component
+function TimelineStep({
+  number,
+  title,
+  description,
+  isLast = false,
+}: {
+  number: string;
+  title: string;
+  description: string;
+  isLast?: boolean;
+}) {
+  return (
+    <div className={cn('timeline-item', isLast && 'pb-0')}>
+      <div className="timeline-dot" />
+      <div className="timeline-content">
+        <span className="text-caption text-ink-300 font-mono">{number}</span>
+        <h4 className="text-title-sm text-ink-900 mt-1 mb-2">{title}</h4>
+        <p className="text-body-sm text-ink-500">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+// Checklist Item Component
+function ChecklistItem({
+  icon: Icon,
+  title,
+  description,
+  status,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  status: 'verified' | 'pending';
+}) {
+  return (
+    <div className="checklist-item px-5 py-4">
+      <div className={cn(
+        'checklist-icon',
+        status === 'verified' ? 'checklist-icon-done' : 'checklist-icon-pending'
+      )}>
+        {status === 'verified' ? (
+          <Check className="w-3 h-3" />
+        ) : (
+          <Icon className="w-3 h-3" />
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h4 className="text-body-sm font-medium text-ink-900">{title}</h4>
+          {status === 'verified' && (
+            <span className="badge-positive">Verified</span>
+          )}
         </div>
-      </footer>
+        <p className="text-caption text-ink-500 mt-0.5">{description}</p>
+      </div>
     </div>
   );
 }

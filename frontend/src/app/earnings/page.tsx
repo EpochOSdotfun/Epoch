@@ -7,7 +7,9 @@ import { Search, Wallet, CheckCircle, Clock, ArrowRight, ChevronRight, ExternalL
 import { useWalletEarnings } from '@/hooks/useWalletEarnings';
 import { WalletButton } from '@/components/wallet-button';
 import { ClaimButton } from '@/components/claim-button';
-import { formatSol, formatNumber, shortenAddress } from '@/lib/utils';
+import { EmptyState } from '@/components/empty-state';
+import { EarningsSkeleton } from '@/components/skeleton';
+import { formatSol, formatNumber, shortenAddress, formatDate, cn } from '@/lib/utils';
 
 export default function EarningsPage() {
   const { connected, publicKey } = useWallet();
@@ -32,37 +34,16 @@ export default function EarningsPage() {
   return (
     <div className="page-fade min-h-screen">
       {/* Header */}
-      <header className="border-b border-surface-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container-default h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-ink-900 rounded flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">E</span>
-              </div>
-              <span className="font-semibold text-ink-900">Epoch</span>
-            </Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link href="/epochs" className="text-body-sm text-ink-500 hover:text-ink-900 transition-colors">
-                Epochs
-              </Link>
-              <Link href="/earnings" className="text-body-sm text-ink-900 font-medium">
-                Earnings
-              </Link>
-            </nav>
-          </div>
-          <WalletButton />
+      <header className="border-b border-surface-100 bg-bg-secondary/50">
+        <div className="container-default py-6">
+          <h1 className="text-h2 text-ink-900">Earnings</h1>
+          <p className="text-body text-ink-500 mt-1">
+            Track rewards, view epoch breakdown, claim SOL
+          </p>
         </div>
       </header>
 
-      <main className="container-default py-12">
-        {/* Page Title */}
-        <div className="mb-10">
-          <h1 className="text-title-lg text-ink-900 mb-2">Earnings Dashboard</h1>
-          <p className="text-body text-ink-500">
-            Track rewards, view epoch breakdown, and claim your SOL
-          </p>
-        </div>
-
+      <main className="container-default py-8">
         {/* Search Bar */}
         <div className="card-padded mb-8">
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
@@ -79,6 +60,12 @@ export default function EarningsPage() {
             <button type="submit" className="btn-primary">
               Search
             </button>
+            {!connected && (
+              <div className="flex items-center gap-3">
+                <span className="text-caption text-ink-300">or</span>
+                <WalletButton />
+              </div>
+            )}
           </form>
           
           {walletAddress && (
@@ -96,17 +83,17 @@ export default function EarningsPage() {
         {walletAddress ? (
           <>
             {isLoading ? (
-              <LoadingState />
+              <EarningsSkeleton />
             ) : error ? (
               <ErrorState error={error as Error} />
             ) : earnings ? (
               <EarningsContent earnings={earnings} walletAddress={walletAddress} />
             ) : (
-              <EmptyState type="no-data" />
+              <EmptyState variant="no-data" />
             )}
           </>
         ) : (
-          <EmptyState type="no-wallet" />
+          <EmptyState variant="no-wallet" />
         )}
       </main>
     </div>
@@ -145,7 +132,7 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
             <Clock className="w-4 h-4 text-warning" />
             <span className="kpi-label mb-0">Unclaimed</span>
           </div>
-          <p className={`kpi-value ${hasUnclaimed ? 'text-accent' : ''}`}>
+          <p className={cn('kpi-value', hasUnclaimed && 'text-accent')}>
             {formatSol(earnings.unclaimedSol)} SOL
           </p>
           <p className="kpi-sublabel">{earnings.eligibleEpochs - earnings.claimedEpochs} epochs pending</p>
@@ -162,17 +149,14 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
                 {formatSol(earnings.unclaimedSol)} SOL from {earnings.eligibleEpochs - earnings.claimedEpochs} unclaimed epochs
               </p>
             </div>
-            <button className="btn-accent">
-              Claim All
-              <ArrowRight className="w-4 h-4" />
-            </button>
+            <ClaimButton wallet={walletAddress} unclaimedSol={earnings.unclaimedSol} />
           </div>
         </div>
       )}
 
       {/* Epoch Breakdown Table */}
       <div className="card overflow-hidden">
-        <div className="px-6 py-4 border-b border-surface-200 flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-surface-100 flex items-center justify-between">
           <h3 className="text-title-sm text-ink-900">Epoch Breakdown</h3>
           <Link href="/epochs" className="btn-ghost btn-sm">
             View all epochs
@@ -187,14 +171,14 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
                 <th>Epoch</th>
                 <th>Amount</th>
                 <th>Status</th>
-                <th>Date</th>
+                <th className="hidden md:table-cell">Date</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {earnings.epochBreakdown.map((epoch: any) => (
                 <tr key={epoch.epochId}>
-                  <td className="font-medium text-ink-900">#{epoch.epochId}</td>
+                  <td className="font-mono font-medium text-ink-900">#{epoch.epochId}</td>
                   <td className="mono-value">{formatSol(epoch.amount)} SOL</td>
                   <td>
                     {epoch.claimed ? (
@@ -203,11 +187,8 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
                       <span className="badge-warning">Pending</span>
                     )}
                   </td>
-                  <td className="text-ink-500">
-                    {new Date(epoch.date).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                  <td className="hidden md:table-cell text-ink-500">
+                    {formatDate(epoch.date)}
                   </td>
                   <td className="text-right">
                     <Link href={`/epoch/${epoch.epochId}`} className="btn-ghost btn-sm">
@@ -219,7 +200,7 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
             </tbody>
           </table>
         ) : (
-          <div className="px-6 py-12 text-center">
+          <div className="px-5 py-12 text-center">
             <p className="text-body-sm text-ink-500">No epoch data available</p>
           </div>
         )}
@@ -228,61 +209,15 @@ function EarningsContent({ earnings, walletAddress }: { earnings: any; walletAdd
   );
 }
 
-function LoadingState() {
-  return (
-    <div className="space-y-8">
-      <div className="grid sm:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="card-padded">
-            <div className="skeleton h-4 w-24 mb-4" />
-            <div className="skeleton h-8 w-32 mb-2" />
-            <div className="skeleton h-3 w-20" />
-          </div>
-        ))}
-      </div>
-      <div className="card-padded">
-        <div className="skeleton h-6 w-40 mb-6" />
-        <div className="space-y-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="skeleton h-12 w-full" />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ErrorState({ error }: { error: Error }) {
   return (
     <div className="card-padded text-center py-16">
-      <div className="w-12 h-12 rounded-md bg-negative/10 flex items-center justify-center mx-auto mb-4">
+      <div className="w-12 h-12 rounded-lg bg-negative/10 flex items-center justify-center mx-auto mb-4">
         <ExternalLink className="w-5 h-5 text-negative" />
       </div>
       <h3 className="text-title-sm text-ink-900 mb-2">Error Loading Data</h3>
       <p className="text-body-sm text-ink-500 max-w-sm mx-auto">
         {error.message || 'Unable to fetch earnings data. Please try again.'}
-      </p>
-    </div>
-  );
-}
-
-function EmptyState({ type }: { type: 'no-wallet' | 'no-data' }) {
-  return (
-    <div className="card-padded text-center py-16">
-      <div className="w-12 h-12 rounded-md bg-surface-100 flex items-center justify-center mx-auto mb-4">
-        {type === 'no-wallet' ? (
-          <Search className="w-5 h-5 text-ink-500" />
-        ) : (
-          <Wallet className="w-5 h-5 text-ink-500" />
-        )}
-      </div>
-      <h3 className="text-title-sm text-ink-900 mb-2">
-        {type === 'no-wallet' ? 'Enter a Wallet Address' : 'No Earnings Found'}
-      </h3>
-      <p className="text-body-sm text-ink-500 max-w-sm mx-auto">
-        {type === 'no-wallet'
-          ? 'Connect your wallet or enter any Solana address to view earnings and claim history.'
-          : 'This wallet has no recorded earnings. Hold tokens to become eligible for rewards.'}
       </p>
     </div>
   );
