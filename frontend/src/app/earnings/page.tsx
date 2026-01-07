@@ -235,11 +235,11 @@ export default function EarningsPage() {
                     <h3 className="text-body font-semibold mb-4">Claim History</h3>
                     <ClaimHistory 
                       claims={earnings.epochBreakdown
-                        .filter((e: { claimed: boolean }) => e.claimed && e.claimSig)
-                        .map((e: { epochId: number; claimedSol: string; claimSig: string; claimedAt: string }) => ({
+                        .filter((e: { claimed: boolean; claimSig: string | null }) => e.claimed && e.claimSig)
+                        .map((e: { epochId: number; claimedSol: string; claimSig: string | null; claimedAt: string }) => ({
                           epochId: e.epochId,
                           amount: e.claimedSol,
-                          signature: e.claimSig,
+                          signature: e.claimSig!,
                           timestamp: e.claimedAt,
                         }))}
                     />
